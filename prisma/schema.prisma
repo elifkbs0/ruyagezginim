@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  brand       String?
+  category    String
+  imageUrl    String?
+  description String?
+  slug        String   @unique
+  viewCount   Int      @default(0)
+  searchCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  listings    PlatformListing[]
+}
+
+model PlatformListing {
+  id            String   @id @default(cuid())
+  productId     String
+  platform      String   // TRENDYOL, HEPSIBURADA, AMAZON, N11
+  externalId    String
+  url           String
+  currentPrice  Float
+  originalPrice Float?
+  rating        Float?
+  reviewCount   Int?
+  inStock       Boolean  @default(true)
+  seller        String?
+  imageUrl      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  priceHistory  PriceHistory[]
+
+  @@unique([platform, externalId])
+  @@index([productId])
+}
+
+model PriceHistory {
+  id                String   @id @default(cuid())
+  platformListingId String
+  price             Float
+  recordedAt        DateTime @default(now())
+  platformListing   PlatformListing @relation(fields: [platformListingId], references: [id], onDelete: Cascade)
+
+  @@index([platformListingId])
+  @@index([recordedAt])
+}
+
+model SearchLog {
+  id        String   @id @default(cuid())
+  query     String
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([query])
+}
