@@ -216,6 +216,13 @@ export async function searchHepsiburada(query: string): Promise<ScrapedProduct[]
   }
 }
 
+function parseHbPrice(text: string): number {
+  if (!text) return 0;
+  // "6.503,85 TL" → 6503.85 | "54.999 TL" → 54999
+  const s = text.replace(/TL|\s/g, "").replace(/\./g, "").replace(",", ".");
+  return parseFloat(s) || 0;
+}
+
 function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
   const $ = cheerio.load(html);
   const products: ScrapedProduct[] = [];
@@ -237,18 +244,19 @@ function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
       const img = $(el).find("img[src*='hepsiburada']").first().attr("src") ?? "";
 
       // Price: data-test-id="final-price-N"
-      const priceText = $(el).find("[data-test-id^='final-price']").first().text().replace(/TL|,/g, "").replace(/\./g, "").trim();
-      let price = Number(priceText) || 0;
+      // Turkish format: "6.503,85 TL" → remove TL/spaces → "6.503,85" → remove dots (thousands) → "6503,85" → comma→dot → 6503.85
+      const priceRaw = $(el).find("[data-test-id^='final-price']").first().text();
+      let price = parseHbPrice(priceRaw);
       // Fallback: aria-label "Sepete ekle, fiyat: 54.999 TL, ..."
       if (!price) {
         const ariaLabel = $(el).find("h2").attr("aria-label") ?? "";
         const m = ariaLabel.match(/fiyat: ([\d.]+) TL/);
-        if (m) price = parsePrice(m[1]);
+        if (m) price = parseHbPrice(m[1] + " TL");
       }
 
       // Original price (strikethrough): class contains "originalPrice" or "listingPrice"
       const orgText = $(el).find("[class*='originalPrice'], [class*='listingPrice'], [data-test-id^='original-price']").first().text();
-      const orgPrice = orgText ? parsePrice(orgText.replace(/TL|,/g, "").replace(/\./g, "")) : undefined;
+      const orgPrice = orgText ? parseHbPrice(orgText) : undefined;
 
       // Rating: data-test-id="rating-N" container has sr-only span
       const ratingEl = $(el).find("[data-test-id^='rating']");
