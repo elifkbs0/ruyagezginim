@@ -34,9 +34,10 @@ export async function proxyFetch(
       ...(options?.render ? { render: "true" } : {}),
     });
     try {
+      const timeoutMs = options?.render ? 70000 : 25000;
       const res = await fetch(
         `http://api.scraperapi.com?${params}`,
-        { headers: HEADERS, signal: AbortSignal.timeout(25000) }
+        { headers: HEADERS, signal: AbortSignal.timeout(timeoutMs) }
       );
       if (res.ok) return res;
       console.warn("[ScraperAPI] status:", res.status);

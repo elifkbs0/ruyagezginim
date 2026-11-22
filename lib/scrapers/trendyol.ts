@@ -30,7 +30,7 @@ function parsePrice(text: string): number {
 export async function searchTrendyol(query: string): Promise<ScrapedProduct[]> {
   try {
     const url = `https://www.trendyol.com/sr?q=${encodeURIComponent(query)}&pi=1`;
-    const res = await proxyFetch(url, { render: false });
+    const res = await proxyFetch(url, { render: true });
     if (!res) return [];
 
     const html = await res.text();
@@ -41,16 +41,69 @@ export async function searchTrendyol(query: string): Promise<ScrapedProduct[]> {
       return parseTrendyolNextData(nextDataMatch[1], query);
     }
 
-    // Fallback: try window.__SEARCH_APP_INITIAL_STATE__
+    // Try window.__SEARCH_APP_INITIAL_STATE__ (older format)
     const stateMatch = html.match(/window\.__SEARCH_APP_INITIAL_STATE__\s*=\s*({[\s\S]*?});\s*(?:window|<\/script>)/);
     if (stateMatch) {
       return parseTrendyolState(stateMatch[1]);
     }
 
+    // Try new Trendyol format: JSON with itemNumber + price.current embedded in page
+    const newFormatProducts = parseTrendyolNewFormat(html);
+    if (newFormatProducts.length > 0) return newFormatProducts;
+
     // Fallback: HTML scraping
     return scrapeTrendyolHtml(html);
   } catch (e) {
     console.error("[Trendyol] search error:", e);
+    return [];
+  }
+}
+
+function parseTrendyolNewFormat(html: string): ScrapedProduct[] {
+  try {
+    const products: ScrapedProduct[] = [];
+    // Match Trendyol's new JSON format: itemNumber, listingId, name, price in fixed order
+    const regex = /"itemNumber":(\d+),"listingId":"[^"]*","name":"([^"]+)","price":\{"old":(\d+),"oldText":"[^"]*","currency":"TL","current":(\d+)/g;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(html)) !== null && products.length < 24) {
+      const [, itemNum, name, oldPriceStr, currentPriceStr] = m;
+      const currentPrice = Number(currentPriceStr);
+      const oldPrice = Number(oldPriceStr);
+
+      // Look ahead for rating + cleanUrlFragments
+      const after = html.slice(m.index, m.index + 2000);
+      const ratingM = after.match(/"averageRating":([\d.]+),"totalCount":(\d+)/);
+      const brandM = after.match(/"cleanUrlFragments":\{"brandName":"([^"]+)"/);
+      const webBrandM = after.match(/"webBrandName":"([^"]+)"/);
+
+      // Look back for CDN image URL
+      const before = html.slice(Math.max(0, m.index - 3000), m.index);
+      const imgs = [...before.matchAll(/https:\\u002F\\u002Fcdn\.dsmcdn\.com[^"\\]*org_zoom\.jpg/g)];
+      const rawImg = imgs.length > 0 ? imgs[imgs.length - 1][0] : "";
+      const imgUrl = rawImg ? rawImg.replace(/\\u002F/g, "/") : "";
+
+      const brand = brandM ? brandM[1] : "";
+      const webBrand = (webBrandM ? webBrandM[1] : brand).toLowerCase().replace(/\s+/g, "-");
+      const nameSlug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
+
+      if (currentPrice > 0) {
+        products.push({
+          externalId: itemNum,
+          platform: "TRENDYOL",
+          name,
+          brand,
+          imageUrl: imgUrl,
+          url: `https://www.trendyol.com/${webBrand}/${nameSlug}-p-${itemNum}`,
+          currentPrice,
+          originalPrice: oldPrice > currentPrice ? oldPrice : undefined,
+          rating: ratingM ? Number(ratingM[1]) : undefined,
+          reviewCount: ratingM ? Number(ratingM[2]) : undefined,
+          inStock: true,
+        });
+      }
+    }
+    return products;
+  } catch {
     return [];
   }
 }
@@ -145,7 +198,7 @@ function fixTrendyolImage(img: string): string {
 export async function searchHepsiburada(query: string): Promise<ScrapedProduct[]> {
   try {
     const url = `https://www.hepsiburada.com/arama?q=${encodeURIComponent(query)}&sayfa=1`;
-    const res = await proxyFetch(url, { render: false });
+    const res = await proxyFetch(url, { render: true });
     if (!res) return [];
 
     const html = await res.text();
@@ -225,7 +278,7 @@ function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
 export async function searchN11(query: string): Promise<ScrapedProduct[]> {
   try {
     const url = `https://www.n11.com/arama?q=${encodeURIComponent(query)}`;
-    const res = await proxyFetch(url, { render: false });
+    const res = await proxyFetch(url, { render: true });
     if (!res) return [];
 
     const html = await res.text();

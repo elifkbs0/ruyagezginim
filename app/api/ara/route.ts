@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim();
@@ -20,12 +21,14 @@ export async function GET(request: NextRequest) {
 
   // DB cache (products updated in last 2 hours)
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const words = q.split(/\s+/).filter(w => w.length > 1);
   const cached = await db.product.findMany({
     where: {
       OR: [
         { name: { contains: q } },
         { brand: { contains: q } },
-        { category: { contains: q } },
+        ...words.map(w => ({ name: { contains: w } })),
+        ...words.map(w => ({ brand: { contains: w } })),
       ],
       updatedAt: { gte: twoHoursAgo },
     },
@@ -52,6 +55,8 @@ export async function GET(request: NextRequest) {
         OR: [
           { name: { contains: q } },
           { brand: { contains: q } },
+          ...words.map(w => ({ name: { contains: w } })),
+          ...words.map(w => ({ brand: { contains: w } })),
         ],
       },
       include: {
@@ -84,13 +89,13 @@ export async function GET(request: NextRequest) {
 
   for (const [, listings] of nameGroups) {
     const main = listings[0];
-    const slug =
-      slugify(main.name).slice(0, 60) + "-" + Date.now().toString(36).slice(-4);
+    // Deterministik slug: externalId ile sabit → aynı ürün her scrape'de aynı slug'a sahip
+    const slug = slugify(main.name).slice(0, 55) + "-" + main.externalId.slice(-6);
 
     try {
       const product = await db.product.upsert({
         where: { slug },
-        update: { updatedAt: new Date() },
+        update: { updatedAt: new Date(), imageUrl: main.imageUrl || null },
         create: {
           name: main.name,
           brand: main.brand || null,
@@ -109,6 +114,7 @@ export async function GET(request: NextRequest) {
             },
           },
           update: {
+            productId: product.id,
             currentPrice: listing.currentPrice,
             originalPrice: listing.originalPrice ?? null,
             rating: listing.rating ?? null,
@@ -136,7 +142,11 @@ export async function GET(request: NextRequest) {
         }).catch(() => {});
       }
 
-      savedProducts.push({ ...product, listings });
+      const productWithListings = await db.product.findUnique({
+        where: { id: product.id },
+        include: { listings: { orderBy: { currentPrice: "asc" } } },
+      });
+      if (productWithListings) savedProducts.push(productWithListings);
     } catch {}
   }
 
