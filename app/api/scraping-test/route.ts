@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { proxyFetch, hasProxy } from "@/lib/scrapers/proxy";
-import { searchHepsiburada } from "@/lib/scrapers/trendyol";
+import { searchHepsiburada, searchAmazon } from "@/lib/scrapers/trendyol";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -40,6 +40,20 @@ export async function GET() {
     }
   } catch (e) {
     results["hepsiburada"] = `✗ Hata: ${e}`;
+  }
+
+  // Test Amazon Turkey
+  try {
+    const start = Date.now();
+    const products = await searchAmazon("iPhone");
+    const ms = Date.now() - start;
+    results["amazon"] = `✓ ${ms}ms — ${products.length} ürün bulundu`;
+    if (products.length > 0) {
+      const p = products[0];
+      results["amz_sample"] = `${p.name.slice(0, 60)} | ₺${p.currentPrice} | ⭐${p.rating ?? "?"} | ${p.imageUrl ? "resim✓" : "resim✗"}`;
+    }
+  } catch (e) {
+    results["amazon"] = `✗ Hata: ${e}`;
   }
 
   return NextResponse.json(results, {

@@ -278,6 +278,87 @@ function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
   return products.slice(0, 24);
 }
 
+// ─── Amazon Turkey ───────────────────────────────────────────────────────────
+
+export async function searchAmazon(query: string): Promise<ScrapedProduct[]> {
+  try {
+    const url = `https://www.amazon.com.tr/s?k=${encodeURIComponent(query)}`;
+    const res = await proxyFetch(url, { render: false });
+    if (!res) return [];
+    const html = await res.text();
+    return scrapeAmazonHtml(html);
+  } catch (e) {
+    console.error("[Amazon] search error:", e);
+    return [];
+  }
+}
+
+function scrapeAmazonHtml(html: string): ScrapedProduct[] {
+  const $ = cheerio.load(html);
+  const products: ScrapedProduct[] = [];
+
+  $("[data-component-type='s-search-result'][data-asin]").each((_, el) => {
+    try {
+      const asin = $(el).attr("data-asin") ?? "";
+      if (!asin || asin.length < 5) return;
+
+      // Name from h2 span (Amazon TR structure: no <a> inside h2)
+      const name = $(el).find("h2 span").first().text().trim() ||
+                   $(el).find("h2").attr("aria-label") || "";
+      if (!name) return;
+
+      // Price: .a-offscreen has full price text like "1.299,00 TL"
+      const priceText = $(el).find(".a-price .a-offscreen").first().text();
+      const price = parseAmazonPrice(priceText);
+      if (!price) return;
+
+      // Original price (strikethrough)
+      const orgText = $(el).find(".a-text-price .a-offscreen").first().text();
+      const orgPrice = orgText ? parseAmazonPrice(orgText) : undefined;
+
+      const img = $(el).find("img.s-image").first().attr("src") ?? "";
+
+      // Link containing the ASIN
+      const href = $(el).find(`a[href*='${asin}']`).first().attr("href") ?? "";
+      const cleanHref = href.split("?")[0] || `/dp/${asin}`;
+      const url = `https://www.amazon.com.tr${cleanHref}`;
+
+      // Rating: aria-label="5 yıldız üzerinden 4,1, derecelendirme ayrıntıları"
+      const ratingLabel = $(el).find("[aria-label*='yıldız üzerinden']").first().attr("aria-label") ?? "";
+      const ratingMatch = ratingLabel.match(/üzerinden ([\d,]+)/);
+      const rating = ratingMatch ? parseFloat(ratingMatch[1].replace(",", ".")) : undefined;
+
+      // Review count: aria-label="296 derecelendirme"
+      const reviewLabel = $(el).find("[aria-label*='derecelendirme']").last().attr("aria-label") ?? "";
+      const reviewMatch = reviewLabel.match(/^(\d[\d.]*)\s/);
+      const reviewCount = reviewMatch ? parseInt(reviewMatch[1].replace(/\./g, "")) : undefined;
+
+      products.push({
+        externalId: asin,
+        platform: "AMAZON",
+        name,
+        brand: "",
+        imageUrl: img,
+        url,
+        currentPrice: price,
+        originalPrice: orgPrice && orgPrice > price ? orgPrice : undefined,
+        rating,
+        reviewCount,
+        inStock: true,
+      });
+    } catch {}
+  });
+
+  return products.slice(0, 24);
+}
+
+function parseAmazonPrice(text: string): number {
+  if (!text) return 0;
+  // "1.299,00 TL" → remove TL, replace . (thousands) → remove, , (decimal) → .
+  const clean = text.replace(/[^\d.,]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", ".");
+  return parseFloat(clean) || 0;
+}
+
 // ─── N11 ─────────────────────────────────────────────────────────────────────
 
 export async function searchN11(query: string): Promise<ScrapedProduct[]> {
