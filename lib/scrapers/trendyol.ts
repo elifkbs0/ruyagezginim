@@ -359,6 +359,90 @@ function parseAmazonPrice(text: string): number {
   return parseFloat(clean) || 0;
 }
 
+// ─── Çiçeksepeti ─────────────────────────────────────────────────────────────
+
+export async function searchCiceksepeti(query: string): Promise<ScrapedProduct[]> {
+  try {
+    const url = `https://www.ciceksepeti.com/arama?query=${encodeURIComponent(query)}&qt=${encodeURIComponent(query)}`;
+    // render:true + 5s wait for client-side product listing to load
+    const res = await proxyFetch(url, { render: true, waitMs: 5000 });
+    if (!res) return [];
+    const html = await res.text();
+    return scrapeCiceksepetHtml(html);
+  } catch (e) {
+    console.error("[Çiçeksepeti] search error:", e);
+    return [];
+  }
+}
+
+function scrapeCiceksepetHtml(html: string): ScrapedProduct[] {
+  const $ = cheerio.load(html);
+  const products: ScrapedProduct[] = [];
+
+  // Build image map from <link rel="preload" as="image"> in <head>
+  // URL pattern: /cicek/{productCode}-1/M/{slug}.jpg
+  const imageMap = new Map<string, string>();
+  $("link[rel='preload'][as='image']").each((_, el) => {
+    const href = $(el).attr("href") ?? "";
+    const m = href.match(/\/cicek\/([^-/]+)/);
+    if (m && href.includes("cdn")) imageMap.set(m[1], href);
+  });
+
+  $("a[data-cs-product-box='true']").each((_, el) => {
+    try {
+      const href = $(el).attr("href") ?? "";
+      if (!href || href === "#") return;
+
+      // Name from product image alt attribute
+      const name = $(el).find("img[data-cs-pb-image='true']").first().attr("alt") ?? "";
+      if (!name) return;
+
+      const productId = $(el).attr("data-product-id") ?? Date.now().toString();
+
+      // Price
+      const priceText = $(el).find("[data-cs-pb-price-text='true']").first().text();
+      const price = parseCsPrice(priceText);
+      if (!price) return;
+
+      // Original price (shown when discounted)
+      const origText = $(el).find("[data-cs-pb-first-price-text='true']").first().text().trim();
+      const origPrice = origText ? parseCsPrice(origText) : undefined;
+
+      // Review count: "(146)" → 146
+      const reviewText = $(el).find("[data-cs-pb-review-count='true']").first().text();
+      const reviewMatch = reviewText.match(/\((\d+)\)/);
+      const reviewCount = reviewMatch ? parseInt(reviewMatch[1]) : undefined;
+
+      // Image from preload link map (matches first ~9 products)
+      const cleanHref = href.split("?")[0];
+      const productCode = cleanHref.split("-").pop() ?? "";
+      const imageUrl = imageMap.get(productCode) ?? "";
+
+      products.push({
+        externalId: productId,
+        platform: "CICEKSEPETI",
+        name,
+        brand: "",
+        imageUrl,
+        url: `https://www.ciceksepeti.com${cleanHref}`,
+        currentPrice: price,
+        originalPrice: origPrice && origPrice > price ? origPrice : undefined,
+        reviewCount,
+        inStock: true,
+      });
+    } catch {}
+  });
+
+  return products.slice(0, 24);
+}
+
+function parseCsPrice(text: string): number {
+  if (!text) return 0;
+  // "1.790 TL" → 1790, "979,99 TL" → 979.99
+  const clean = text.replace(/[^\d.,]/g, "").replace(/\.(?=\d{3})/g, "").replace(",", ".");
+  return parseFloat(clean) || 0;
+}
+
 // ─── N11 ─────────────────────────────────────────────────────────────────────
 
 export async function searchN11(query: string): Promise<ScrapedProduct[]> {

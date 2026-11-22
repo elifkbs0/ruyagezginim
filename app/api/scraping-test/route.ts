@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { proxyFetch, hasProxy } from "@/lib/scrapers/proxy";
-import { searchHepsiburada, searchAmazon } from "@/lib/scrapers/trendyol";
+import { searchHepsiburada, searchAmazon, searchCiceksepeti } from "@/lib/scrapers/trendyol";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -54,6 +54,20 @@ export async function GET() {
     }
   } catch (e) {
     results["amazon"] = `✗ Hata: ${e}`;
+  }
+
+  // Test Çiçeksepeti
+  try {
+    const start = Date.now();
+    const products = await searchCiceksepeti("parfüm");
+    const ms = Date.now() - start;
+    results["ciceksepeti"] = `✓ ${ms}ms — ${products.length} ürün bulundu`;
+    if (products.length > 0) {
+      const p = products[0];
+      results["cs_sample"] = `${p.name.slice(0, 60)} | ₺${p.currentPrice} | ${p.reviewCount ?? "?"} yorum | ${p.imageUrl ? "resim✓" : "resim✗"}`;
+    }
+  } catch (e) {
+    results["ciceksepeti"] = `✗ Hata: ${e}`;
   }
 
   return NextResponse.json(results, {

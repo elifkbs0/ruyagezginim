@@ -20,7 +20,7 @@ const HEADERS = {
 
 export async function proxyFetch(
   url: string,
-  options?: { render?: boolean; json?: boolean; premium?: boolean }
+  options?: { render?: boolean; json?: boolean; premium?: boolean; waitMs?: number }
 ): Promise<Response | null> {
   const scraperApiKey = process.env.SCRAPER_API_KEY;
   const scrapingBeeKey = process.env.SCRAPINGBEE_KEY;
@@ -33,9 +33,11 @@ export async function proxyFetch(
       country_code: "tr",
       ...(options?.render ? { render: "true" } : {}),
       ...(options?.premium ? { premium: "true" } : {}),
+      ...(options?.waitMs ? { wait: String(options.waitMs) } : {}),
     });
     try {
-      const timeoutMs = options?.render ? 70000 : 25000;
+      const extraWait = options?.waitMs ?? 0;
+      const timeoutMs = options?.render ? 70000 + extraWait : 25000;
       const res = await fetch(
         `http://api.scraperapi.com?${params}`,
         { headers: HEADERS, signal: AbortSignal.timeout(timeoutMs) }
