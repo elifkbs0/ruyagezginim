@@ -195,45 +195,23 @@ function fixTrendyolImage(img: string): string {
 
 // ─── Hepsiburada ─────────────────────────────────────────────────────────────
 
+const HB_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,*/*",
+  "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
+  "Accept-Encoding": "gzip, deflate, br",
+};
+
 export async function searchHepsiburada(query: string): Promise<ScrapedProduct[]> {
   try {
-    const url = `https://www.hepsiburada.com/arama?q=${encodeURIComponent(query)}&sayfa=1`;
-    const res = await proxyFetch(url, { render: true });
-    if (!res) return [];
-
+    // Direct fetch works; proxy blocks with 500
+    const url = `https://www.hepsiburada.com/ara?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: HB_HEADERS, signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return [];
     const html = await res.text();
-
-    // Try JSON in script tags
-    const jsonMatch = html.match(/"products"\s*:\s*(\[[\s\S]*?\])\s*,\s*"pagination"/);
-    if (jsonMatch) {
-      return parseHepsiburadaJson(jsonMatch[1]);
-    }
-
     return scrapeHepsiburadaHtml(html);
   } catch (e) {
     console.error("[Hepsiburada] search error:", e);
-    return [];
-  }
-}
-
-function parseHepsiburadaJson(json: string): ScrapedProduct[] {
-  try {
-    const products = JSON.parse(json);
-    return products.slice(0, 24).map((p: Record<string, unknown>) => ({
-      externalId: String(p.id ?? p.sku ?? ""),
-      platform: "HEPSIBURADA",
-      name: String(p.name ?? p.displayName ?? ""),
-      brand: String(p.brand ?? ""),
-      imageUrl: String(p.imageUrl ?? ""),
-      url: `https://www.hepsiburada.com${p.url ?? ""}`,
-      currentPrice: Number(p.price ?? p.listingPrice ?? 0),
-      originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
-      rating: p.rating ? Number(p.rating) : undefined,
-      reviewCount: p.ratingCount ? Number(p.ratingCount) : undefined,
-      inStock: Boolean(p.available ?? true),
-      category: String(p.categoryName ?? ""),
-    })).filter((p: ScrapedProduct) => p.name && p.currentPrice > 0);
-  } catch {
     return [];
   }
 }
@@ -242,28 +220,55 @@ function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
   const $ = cheerio.load(html);
   const products: ScrapedProduct[] = [];
 
-  $("[data-test-id='product-card-wrapper'], .productListContent-item").each((_, el) => {
+  // Product cards: <article class="productCard-module_article__*">
+  $("article[class*='productCard-module_article']").each((_, el) => {
     try {
-      const name = $(el).find("[data-test-id='product-card-name'], [title]").first().text().trim();
-      const priceEl = $(el).find("[data-test-id='price-current-price'], .price").first().text();
-      const price = parsePrice(priceEl);
-      const orgEl = $(el).find("[data-test-id='price-original-price']").first().text();
-      const orgPrice = parsePrice(orgEl);
-      const img = $(el).find("img").attr("src") ?? "";
-      const link = $(el).find("a").first().attr("href") ?? "";
-      const id = link.split("-p-").pop()?.split("?")[0] ??
-                 link.split("/").pop()?.split("?")[0] ?? Date.now().toString();
+      // Name + URL from first HB-SKU link
+      const link = $(el).find("a[href*='-p-HB']").first();
+      const href = link.attr("href") ?? "";
+      const name = link.attr("title") ?? $(el).find("h2 a").first().attr("title") ?? "";
+      if (!name || !href) return;
 
-      if (name && price > 0) {
+      // SKU from href: /product-name-p-HBCV00004X9ZCH
+      const skuMatch = href.match(/-p-(HB[A-Z0-9]+)$/);
+      const sku = skuMatch ? skuMatch[1] : href.split("/").pop() ?? Date.now().toString();
+
+      // Image
+      const img = $(el).find("img[src*='hepsiburada']").first().attr("src") ?? "";
+
+      // Price: data-test-id="final-price-N"
+      const priceText = $(el).find("[data-test-id^='final-price']").first().text().replace(/TL|,/g, "").replace(/\./g, "").trim();
+      let price = Number(priceText) || 0;
+      // Fallback: aria-label "Sepete ekle, fiyat: 54.999 TL, ..."
+      if (!price) {
+        const ariaLabel = $(el).find("h2").attr("aria-label") ?? "";
+        const m = ariaLabel.match(/fiyat: ([\d.]+) TL/);
+        if (m) price = parsePrice(m[1]);
+      }
+
+      // Original price (strikethrough): class contains "originalPrice" or "listingPrice"
+      const orgText = $(el).find("[class*='originalPrice'], [class*='listingPrice'], [data-test-id^='original-price']").first().text();
+      const orgPrice = orgText ? parsePrice(orgText.replace(/TL|,/g, "").replace(/\./g, "")) : undefined;
+
+      // Rating: data-test-id="rating-N" container has sr-only span
+      const ratingEl = $(el).find("[data-test-id^='rating']");
+      const srText = ratingEl.find("span").first().text() || ratingEl.text();
+      const ratingMatch = srText.match(/Ürün puanı ([\d,]+), (\d+) değerlendirme/);
+      const rating = ratingMatch ? parseFloat(ratingMatch[1].replace(",", ".")) : undefined;
+      const reviewCount = ratingMatch ? parseInt(ratingMatch[2]) : undefined;
+
+      if (price > 0) {
         products.push({
-          externalId: id,
+          externalId: sku,
           platform: "HEPSIBURADA",
           name,
           brand: "",
           imageUrl: img,
-          url: link.startsWith("http") ? link : `https://www.hepsiburada.com${link}`,
+          url: `https://www.hepsiburada.com${href}`,
           currentPrice: price,
-          originalPrice: orgPrice > price ? orgPrice : undefined,
+          originalPrice: orgPrice && orgPrice > price ? orgPrice : undefined,
+          rating,
+          reviewCount,
           inStock: true,
         });
       }

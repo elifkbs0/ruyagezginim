@@ -20,7 +20,7 @@ const HEADERS = {
 
 export async function proxyFetch(
   url: string,
-  options?: { render?: boolean; json?: boolean }
+  options?: { render?: boolean; json?: boolean; premium?: boolean }
 ): Promise<Response | null> {
   const scraperApiKey = process.env.SCRAPER_API_KEY;
   const scrapingBeeKey = process.env.SCRAPINGBEE_KEY;
@@ -32,6 +32,7 @@ export async function proxyFetch(
       url,
       country_code: "tr",
       ...(options?.render ? { render: "true" } : {}),
+      ...(options?.premium ? { premium: "true" } : {}),
     });
     try {
       const timeoutMs = options?.render ? 70000 : 25000;
