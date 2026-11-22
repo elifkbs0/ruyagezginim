@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { proxyFetch } from "./proxy";
 
 export interface ScrapedProduct {
   externalId: string;
@@ -15,136 +16,251 @@ export interface ScrapedProduct {
   category?: string;
 }
 
-const HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  Accept: "application/json, text/html",
-  "Accept-Language": "tr-TR,tr;q=0.9",
-  Referer: "https://www.trendyol.com/",
-};
+function parsePrice(text: string): number {
+  if (!text) return 0;
+  return parseFloat(
+    text
+      .replace(/[^\d,\.]/g, "")
+      .replace(",", ".")
+  ) || 0;
+}
+
+// ─── Trendyol ────────────────────────────────────────────────────────────────
 
 export async function searchTrendyol(query: string): Promise<ScrapedProduct[]> {
   try {
-    const url = `https://public.trendyol.com/discovery-web-searchgw-service/api/filter/search/filter?searchText=${encodeURIComponent(query)}&pi=1&culture=tr-TR&userGenderId=1&pId=0&scoringAlgorithmId=2&categoryRelevancyEnabled=true&isLegalRequirementConfirmed=false&facets=`;
-    const res = await fetch(url, {
-      headers: HEADERS,
-      next: { revalidate: 1800 },
-    });
+    const url = `https://www.trendyol.com/sr?q=${encodeURIComponent(query)}&pi=1`;
+    const res = await proxyFetch(url, { render: false });
+    if (!res) return [];
 
-    if (!res.ok) return [];
+    const html = await res.text();
 
-    const data = await res.json();
-    const products = data?.result?.products ?? [];
+    // Try to extract __NEXT_DATA__ JSON first
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+    if (nextDataMatch) {
+      return parseTrendyolNextData(nextDataMatch[1], query);
+    }
 
-    return products.slice(0, 20).map((p: Record<string, unknown>) => {
-      const price = (p.price as Record<string, number>)?.sellingPrice ?? 0;
-      const orgPrice = (p.price as Record<string, number>)?.originalPrice;
-      return {
-        externalId: String(p.id),
-        platform: "TRENDYOL",
-        name: String(p.name ?? ""),
-        brand: String(p.brand ?? ""),
-        imageUrl: `https://cdn.dsmcdn.com${p.images && Array.isArray(p.images) ? String((p.images as string[])[0]) : ""}`,
-        url: `https://www.trendyol.com${p.url ?? ""}`,
-        currentPrice: price,
-        originalPrice: orgPrice !== price ? orgPrice : undefined,
-        rating: p.ratingScore ? Number(p.ratingScore) : undefined,
-        reviewCount: p.reviewCount ? Number(p.reviewCount) : undefined,
-        inStock: Boolean(p.inStock ?? true),
-        category: String(p.categoryName ?? ""),
-      };
-    });
+    // Fallback: try window.__SEARCH_APP_INITIAL_STATE__
+    const stateMatch = html.match(/window\.__SEARCH_APP_INITIAL_STATE__\s*=\s*({[\s\S]*?});\s*(?:window|<\/script>)/);
+    if (stateMatch) {
+      return parseTrendyolState(stateMatch[1]);
+    }
+
+    // Fallback: HTML scraping
+    return scrapeTrendyolHtml(html);
+  } catch (e) {
+    console.error("[Trendyol] search error:", e);
+    return [];
+  }
+}
+
+function parseTrendyolNextData(json: string, _query: string): ScrapedProduct[] {
+  try {
+    const data = JSON.parse(json);
+    // Navigate the Next.js page data to find product list
+    const pageProps =
+      data?.props?.pageProps ??
+      data?.props?.initialState ??
+      {};
+    const products =
+      pageProps?.searchResult?.products ??
+      pageProps?.products ??
+      [];
+
+    return products.slice(0, 24).map((p: Record<string, unknown>) => ({
+      externalId: String(p.id ?? p.contentId ?? ""),
+      platform: "TRENDYOL",
+      name: String(p.name ?? ""),
+      brand: String(p.brand ?? (p.brandName ?? "")),
+      imageUrl: fixTrendyolImage(String((p.images as string[])?.[0] ?? p.imageUrl ?? "")),
+      url: `https://www.trendyol.com${p.url ?? ""}`,
+      currentPrice: Number((p.price as Record<string, number>)?.sellingPrice ?? p.discountedPrice ?? 0),
+      originalPrice: (p.price as Record<string, number>)?.originalPrice ?? undefined,
+      rating: p.ratingScore ? Number(p.ratingScore) : undefined,
+      reviewCount: p.reviewCount ? Number(p.reviewCount) : undefined,
+      inStock: Boolean(p.inStock ?? true),
+      category: String(p.categoryName ?? ""),
+    })).filter((p: ScrapedProduct) => p.name && p.currentPrice > 0);
   } catch {
     return [];
   }
 }
 
-export async function getTrendyolProduct(productId: string): Promise<ScrapedProduct | null> {
+function parseTrendyolState(json: string): ScrapedProduct[] {
   try {
-    const url = `https://public.trendyol.com/discovery-web-productgw-service/api/productDetail/${productId}?storefrontId=1&culture=tr-TR&userGenderId=1`;
-    const res = await fetch(url, {
-      headers: HEADERS,
-      next: { revalidate: 900 },
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const p = data?.result;
-    if (!p) return null;
-
-    const price = p.price?.sellingPrice ?? 0;
-    const orgPrice = p.price?.originalPrice;
-
-    return {
-      externalId: String(p.id),
-      platform: "TRENDYOL",
-      name: String(p.name ?? ""),
-      brand: String(p.brand?.name ?? ""),
-      imageUrl: `https://cdn.dsmcdn.com${p.images?.[0] ?? ""}`,
-      url: `https://www.trendyol.com${p.url ?? ""}`,
-      currentPrice: price,
-      originalPrice: orgPrice !== price ? orgPrice : undefined,
-      rating: p.ratingScore ? Number(p.ratingScore) : undefined,
-      reviewCount: p.reviewCount ? Number(p.reviewCount) : undefined,
-      inStock: Boolean(p.variants?.some((v: Record<string, unknown>) => v.inStock) ?? true),
-      category: String(p.category?.name ?? ""),
-    };
+    const state = JSON.parse(json);
+    const products =
+      state?.searchResult?.products ??
+      state?.products ??
+      [];
+    return parseTrendyolNextData(JSON.stringify({ props: { pageProps: { products } } }), "");
   } catch {
-    return null;
+    return [];
   }
 }
+
+function scrapeTrendyolHtml(html: string): ScrapedProduct[] {
+  const $ = cheerio.load(html);
+  const products: ScrapedProduct[] = [];
+
+  $(".p-card-wrppr, [data-id]").each((_, el) => {
+    try {
+      const name = $(el).find(".prdct-desc-cntnr-name, .product-name").text().trim();
+      const priceEl = $(el).find(".prc-box-sllng, .selling-price").first().text();
+      const price = parsePrice(priceEl);
+      const orgPriceEl = $(el).find(".prc-box-orgnl").first().text();
+      const orgPrice = parsePrice(orgPriceEl);
+      const img = $(el).find("img").attr("src") ?? "";
+      const link = $(el).find("a").first().attr("href") ?? "";
+      const id = link.split("-p-").pop()?.split("?")[0] ?? Date.now().toString();
+
+      if (name && price > 0) {
+        products.push({
+          externalId: id,
+          platform: "TRENDYOL",
+          name,
+          brand: $(el).find(".prdct-desc-cntnr-ttl").text().trim(),
+          imageUrl: fixTrendyolImage(img),
+          url: `https://www.trendyol.com${link}`,
+          currentPrice: price,
+          originalPrice: orgPrice > price ? orgPrice : undefined,
+          inStock: true,
+        });
+      }
+    } catch {}
+  });
+
+  return products.slice(0, 24);
+}
+
+function fixTrendyolImage(img: string): string {
+  if (!img) return "";
+  if (img.startsWith("http")) return img;
+  return `https://cdn.dsmcdn.com${img}`;
+}
+
+// ─── Hepsiburada ─────────────────────────────────────────────────────────────
 
 export async function searchHepsiburada(query: string): Promise<ScrapedProduct[]> {
   try {
     const url = `https://www.hepsiburada.com/arama?q=${encodeURIComponent(query)}&sayfa=1`;
-    const res = await fetch(url, {
-      headers: {
-        ...HEADERS,
-        Referer: "https://www.hepsiburada.com/",
-      },
-      next: { revalidate: 1800 },
-    });
+    const res = await proxyFetch(url, { render: false });
+    if (!res) return [];
 
-    if (!res.ok) return [];
+    const html = await res.text();
+
+    // Try JSON in script tags
+    const jsonMatch = html.match(/"products"\s*:\s*(\[[\s\S]*?\])\s*,\s*"pagination"/);
+    if (jsonMatch) {
+      return parseHepsiburadaJson(jsonMatch[1]);
+    }
+
+    return scrapeHepsiburadaHtml(html);
+  } catch (e) {
+    console.error("[Hepsiburada] search error:", e);
+    return [];
+  }
+}
+
+function parseHepsiburadaJson(json: string): ScrapedProduct[] {
+  try {
+    const products = JSON.parse(json);
+    return products.slice(0, 24).map((p: Record<string, unknown>) => ({
+      externalId: String(p.id ?? p.sku ?? ""),
+      platform: "HEPSIBURADA",
+      name: String(p.name ?? p.displayName ?? ""),
+      brand: String(p.brand ?? ""),
+      imageUrl: String(p.imageUrl ?? ""),
+      url: `https://www.hepsiburada.com${p.url ?? ""}`,
+      currentPrice: Number(p.price ?? p.listingPrice ?? 0),
+      originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+      rating: p.rating ? Number(p.rating) : undefined,
+      reviewCount: p.ratingCount ? Number(p.ratingCount) : undefined,
+      inStock: Boolean(p.available ?? true),
+      category: String(p.categoryName ?? ""),
+    })).filter((p: ScrapedProduct) => p.name && p.currentPrice > 0);
+  } catch {
+    return [];
+  }
+}
+
+function scrapeHepsiburadaHtml(html: string): ScrapedProduct[] {
+  const $ = cheerio.load(html);
+  const products: ScrapedProduct[] = [];
+
+  $("[data-test-id='product-card-wrapper'], .productListContent-item").each((_, el) => {
+    try {
+      const name = $(el).find("[data-test-id='product-card-name'], [title]").first().text().trim();
+      const priceEl = $(el).find("[data-test-id='price-current-price'], .price").first().text();
+      const price = parsePrice(priceEl);
+      const orgEl = $(el).find("[data-test-id='price-original-price']").first().text();
+      const orgPrice = parsePrice(orgEl);
+      const img = $(el).find("img").attr("src") ?? "";
+      const link = $(el).find("a").first().attr("href") ?? "";
+      const id = link.split("-p-").pop()?.split("?")[0] ??
+                 link.split("/").pop()?.split("?")[0] ?? Date.now().toString();
+
+      if (name && price > 0) {
+        products.push({
+          externalId: id,
+          platform: "HEPSIBURADA",
+          name,
+          brand: "",
+          imageUrl: img,
+          url: link.startsWith("http") ? link : `https://www.hepsiburada.com${link}`,
+          currentPrice: price,
+          originalPrice: orgPrice > price ? orgPrice : undefined,
+          inStock: true,
+        });
+      }
+    } catch {}
+  });
+
+  return products.slice(0, 24);
+}
+
+// ─── N11 ─────────────────────────────────────────────────────────────────────
+
+export async function searchN11(query: string): Promise<ScrapedProduct[]> {
+  try {
+    const url = `https://www.n11.com/arama?q=${encodeURIComponent(query)}`;
+    const res = await proxyFetch(url, { render: false });
+    if (!res) return [];
 
     const html = await res.text();
     const $ = cheerio.load(html);
     const products: ScrapedProduct[] = [];
 
-    $("[data-test-id='product-card-wrapper']").each((_, el) => {
+    $(".columnContent .productItem, .gridWrapper .content").each((_, el) => {
       try {
-        const name = $(el).find("[data-test-id='product-card-name']").text().trim();
-        const priceText = $(el).find("[data-test-id='price-current-price']").text().trim();
-        const price = parseFloat(priceText.replace(/[^0-9,]/g, "").replace(",", ".")) || 0;
-        const orgPriceText = $(el).find("[data-test-id='price-original-price']").text().trim();
-        const orgPrice = orgPriceText
-          ? parseFloat(orgPriceText.replace(/[^0-9,]/g, "").replace(",", "."))
-          : undefined;
-        const img = $(el).find("img").attr("src") ?? "";
-        const link = $(el).find("a").attr("href") ?? "";
-        const id = link.split("-").pop()?.replace(/[^a-z0-9]/gi, "") ?? "";
+        const name = $(el).find(".productName, h3").first().text().trim();
+        const priceEl = $(el).find(".newPrice ins, .priceWrapper .price").first().text();
+        const price = parsePrice(priceEl);
+        const img = $(el).find("img").attr("data-original") ??
+                    $(el).find("img").attr("src") ?? "";
+        const link = $(el).find("a").first().attr("href") ?? "";
+        const id = link.split("-p-").pop()?.split(".html")[0] ??
+                   link.split("/").pop() ?? Date.now().toString();
 
         if (name && price > 0) {
           products.push({
             externalId: id,
-            platform: "HEPSIBURADA",
+            platform: "N11",
             name,
             brand: "",
             imageUrl: img,
-            url: `https://www.hepsiburada.com${link}`,
+            url: link.startsWith("http") ? link : `https://www.n11.com${link}`,
             currentPrice: price,
-            originalPrice: orgPrice !== price ? orgPrice : undefined,
             inStock: true,
           });
         }
-      } catch {
-        // skip malformed
-      }
+      } catch {}
     });
 
     return products.slice(0, 20);
-  } catch {
+  } catch (e) {
+    console.error("[N11] search error:", e);
     return [];
   }
 }

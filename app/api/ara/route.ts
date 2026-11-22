@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchAllPlatforms } from "@/lib/scrapers";
+import { searchAllPlatforms, hasProxy } from "@/lib/scrapers";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 
@@ -16,40 +16,62 @@ export async function GET(request: NextRequest) {
     where: { query: q.toLowerCase() },
     update: { count: { increment: 1 }, updatedAt: new Date() },
     create: { query: q.toLowerCase(), count: 1 },
-  });
+  }).catch(() => {});
 
-  // Check DB cache first (products updated in last 2 hours)
+  // DB cache (products updated in last 2 hours)
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-  const cachedProducts = await db.product.findMany({
+  const cached = await db.product.findMany({
     where: {
       OR: [
         { name: { contains: q } },
         { brand: { contains: q } },
+        { category: { contains: q } },
       ],
       updatedAt: { gte: twoHoursAgo },
     },
     include: {
       listings: {
         orderBy: { currentPrice: "asc" },
-        take: 5,
       },
     },
     take: 24,
-    orderBy: { viewCount: "desc" },
+    orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
   });
 
-  if (cachedProducts.length > 0) {
-    return NextResponse.json({ products: cachedProducts, source: "cache" });
+  if (cached.length > 0) {
+    return NextResponse.json({ products: cached, source: "cache", proxy: hasProxy() });
   }
 
-  // Scrape fresh data
+  // Scrape fresh data (needs SCRAPER_API_KEY or SCRAPINGBEE_KEY in .env)
   const scraped = await searchAllPlatforms(q);
 
+  // If no proxy key set, also look in DB without time filter
   if (!scraped.length) {
-    return NextResponse.json({ products: [], source: "scrape" });
+    const anyExisting = await db.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: q } },
+          { brand: { contains: q } },
+        ],
+      },
+      include: {
+        listings: { orderBy: { currentPrice: "asc" } },
+      },
+      take: 24,
+      orderBy: { viewCount: "desc" },
+    });
+
+    return NextResponse.json({
+      products: anyExisting,
+      source: "db_fallback",
+      proxy: hasProxy(),
+      tip: !hasProxy()
+        ? "SCRAPER_API_KEY veya SCRAPINGBEE_KEY ekleyerek gerçek zamanlı fiyatları etkinleştirin"
+        : undefined,
+    });
   }
 
-  // Group by normalized name and save to DB
+  // Group by normalized name and persist
   const nameGroups = new Map<string, typeof scraped>();
   for (const p of scraped) {
     const key = p.name.toLowerCase().slice(0, 50);
@@ -62,14 +84,13 @@ export async function GET(request: NextRequest) {
 
   for (const [, listings] of nameGroups) {
     const main = listings[0];
-    const slug = slugify(main.name) + "-" + Date.now().toString(36).slice(-4);
+    const slug =
+      slugify(main.name).slice(0, 60) + "-" + Date.now().toString(36).slice(-4);
 
     try {
       const product = await db.product.upsert({
         where: { slug },
-        update: {
-          updatedAt: new Date(),
-        },
+        update: { updatedAt: new Date() },
         create: {
           name: main.name,
           brand: main.brand || null,
@@ -110,23 +131,18 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // Record price history
         await db.priceHistory.create({
-          data: {
-            platformListingId: pl.id,
-            price: listing.currentPrice,
-          },
-        });
+          data: { platformListingId: pl.id, price: listing.currentPrice },
+        }).catch(() => {});
       }
 
-      savedProducts.push({
-        ...product,
-        listings,
-      });
-    } catch {
-      // skip failed
-    }
+      savedProducts.push({ ...product, listings });
+    } catch {}
   }
 
-  return NextResponse.json({ products: savedProducts, source: "scrape" });
+  return NextResponse.json({
+    products: savedProducts,
+    source: "scrape",
+    proxy: hasProxy(),
+  });
 }
