@@ -8,14 +8,25 @@ import { ProductImage } from "@/components/product-image";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const rawProducts = await db.product.findMany({
-    where: { imageUrl: { not: null } },
-    take: 8,
-    orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
+  const candidates = await db.product.findMany({
+    where: { imageUrl: { not: null }, listings: { some: {} } },
+    take: 120,
+    orderBy: [{ updatedAt: "desc" }],
     include: {
       listings: { orderBy: { currentPrice: "asc" } },
     },
   });
+
+  // Products have no brand/category yet, so vary the grid by the name's first word.
+  const seenFirstWords = new Set<string>();
+  const rawProducts = candidates
+    .filter((p) => {
+      const first = p.name.trim().split(/\s+/)[0]?.toLocaleLowerCase("tr-TR") ?? "";
+      if (seenFirstWords.has(first)) return false;
+      seenFirstWords.add(first);
+      return true;
+    })
+    .slice(0, 8);
 
   const dealListings = await db.platformListing.findMany({
     where: { originalPrice: { not: null }, inStock: true },
