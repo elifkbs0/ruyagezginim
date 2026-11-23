@@ -135,7 +135,7 @@ export default async function ProductPage({ params }: PageProps) {
               width={400}
               height={400}
               className="max-h-80 object-contain"
-              unoptimized
+             
             />
           ) : (
             <div className="text-gray-300 flex flex-col items-center gap-3">

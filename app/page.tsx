@@ -75,7 +75,7 @@ export default async function HomePage() {
                     className="bg-gray-50 rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
                     style={{ transform: i % 2 === 1 ? "translateY(12px)" : "none" }}
                   >
-                    <Image src={src} alt="" width={120} height={120} className="object-contain p-3 w-full h-full" unoptimized />
+                    <Image src={src} alt="" width={120} height={120} className="object-contain p-3 w-full h-full" />
                   </div>
                 ))
               : [0, 1, 2, 3, 4, 5].map((i) => (
@@ -110,7 +110,7 @@ export default async function HomePage() {
                   <div key={listing.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <Link href={`/urun/${listing.product.slug}`} className="block relative h-40 bg-gray-50">
                       {img ? (
-                        <Image src={img} alt={listing.product.name} fill className="object-contain p-3" unoptimized />
+                        <Image src={img} alt={listing.product.name} fill className="object-contain p-3" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
                       )}
@@ -161,7 +161,7 @@ export default async function HomePage() {
                   <div key={product.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <Link href={`/urun/${product.slug}`} className="block relative h-40 bg-gray-50">
                       {img ? (
-                        <Image src={img} alt={product.name} fill className="object-contain p-3" unoptimized />
+                        <Image src={img} alt={product.name} fill className="object-contain p-3" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
                       )}

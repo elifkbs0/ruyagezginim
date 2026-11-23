@@ -10,8 +10,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.amazonaws.com" },
       { protocol: "https", hostname: "*.n11.com" },
       { protocol: "https", hostname: "*.cloudfront.net" },
+      { protocol: "https", hostname: "*.ciceksepeti.com" },
+      { protocol: "https", hostname: "*.ciceksepeti.net" },
     ],
-    unoptimized: true,
   },
 };
 
