@@ -75,8 +75,45 @@ export default async function ProductPage({ params }: PageProps) {
     product.listings.find((l) => l.imageUrl)?.imageUrl ??
     null;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    ...(product.brand && { brand: { "@type": "Brand", name: product.brand } }),
+    ...(mainImage && { image: mainImage }),
+    description: `${product.name} için en iyi fiyat karşılaştırması. Trendyol, Hepsiburada, Amazon ve daha fazlasında ${formatPrice(minPrice)}'den başlayan fiyatlar.`,
+    offers: {
+      "@type": "AggregateOffer",
+      lowPrice: (minPrice / 100).toFixed(2),
+      highPrice: (maxPrice / 100).toFixed(2),
+      priceCurrency: "TRY",
+      offerCount: product.listings.length,
+      offers: product.listings.map((l) => ({
+        "@type": "Offer",
+        price: (l.currentPrice / 100).toFixed(2),
+        priceCurrency: "TRY",
+        availability: "https://schema.org/InStock",
+        url: l.url,
+        seller: { "@type": "Organization", name: l.platform },
+      })),
+    },
+    ...(bestListing?.rating && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: bestListing.rating.toFixed(1),
+        reviewCount: bestListing.reviewCount ?? 1,
+        bestRating: "5",
+        worstRating: "1",
+      },
+    }),
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-400 mb-6">
         <a href="/" className="hover:text-purple-700">Ana Sayfa</a>

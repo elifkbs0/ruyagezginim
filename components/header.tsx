@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Menu, X, TrendingUp, Sparkles } from "lucide-react";
+import { Search, Menu, X, TrendingUp } from "lucide-react";
 
 export function Header() {
   const [query, setQuery] = useState("");
@@ -18,29 +18,29 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-purple-100">
+    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 h-16">
+        <div className="flex items-center gap-4 h-14">
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 shrink-0 group"
-          >
-            <div className="w-8 h-8 rounded-full dream-gradient flex items-center justify-center">
-              <Sparkles size={16} className="text-white" />
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-black"
+              style={{ background: "linear-gradient(135deg, #6C3FC5, #F59E0B)" }}
+            >
+              R
             </div>
-            <span className="font-bold text-lg hidden sm:block">
-              <span className="text-purple-700">Rüya</span>
-              <span className="text-amber-500">Gezgini</span>
+            <span className="font-black text-base hidden sm:block tracking-tight">
+              <span style={{ color: "#6C3FC5" }}>Rüya</span>
+              <span style={{ color: "#F59E0B" }}>Gezgini</span>
             </span>
           </Link>
 
-          {/* Search bar */}
+          {/* Search */}
           <form
             onSubmit={handleSearch}
-            className="flex-1 flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2 hover:bg-purple-50 transition-colors focus-within:bg-purple-50 focus-within:ring-2 focus-within:ring-purple-300"
+            className="flex-1 flex items-center bg-gray-100 rounded-lg px-3 py-2 gap-2 hover:bg-purple-50 focus-within:bg-purple-50 focus-within:ring-2 focus-within:ring-purple-300 transition-colors"
           >
-            <Search size={18} className="text-purple-400 shrink-0" />
+            <Search size={16} className="text-gray-400 shrink-0" />
             <input
               type="text"
               value={query}
@@ -50,24 +50,21 @@ export function Header() {
             />
           </form>
 
-          {/* Nav links desktop */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium shrink-0">
-            <Link
-              href="/kategori"
-              className="text-gray-600 hover:text-purple-700 transition-colors"
-            >
+          {/* Nav - desktop */}
+          <nav className="hidden md:flex items-center gap-5 text-sm font-medium shrink-0">
+            <Link href="/kategori" className="text-gray-600 hover:text-gray-900 transition-colors">
               Kategoriler
             </Link>
             <Link
               href="/firsatlar"
-              className="flex items-center gap-1 text-amber-600 hover:text-amber-700 transition-colors"
+              className="flex items-center gap-1 text-amber-600 hover:text-amber-700 font-semibold transition-colors"
             >
               <TrendingUp size={14} />
               Fırsatlar
             </Link>
             <Link
               href="/karsilastir"
-              className="bg-purple-700 text-white px-4 py-1.5 rounded-full hover:bg-purple-800 transition-colors"
+              className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-1.5 rounded-lg font-semibold transition-colors text-xs"
             >
               Karşılaştır
             </Link>
@@ -75,36 +72,35 @@ export function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden text-gray-600 hover:text-purple-700"
+            className="md:hidden text-gray-600 hover:text-gray-900 p-1"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menü"
           >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-purple-100 px-4 py-4 flex flex-col gap-3">
+        <div className="md:hidden bg-white border-t border-gray-200 px-4 py-3 flex flex-col gap-1">
           <Link
             href="/kategori"
-            className="text-gray-700 font-medium py-2"
+            className="text-gray-700 font-medium py-2 px-3 rounded-lg hover:bg-gray-50"
             onClick={() => setMobileOpen(false)}
           >
             Kategoriler
           </Link>
           <Link
             href="/firsatlar"
-            className="text-amber-600 font-medium py-2 flex items-center gap-2"
+            className="text-amber-600 font-semibold py-2 px-3 rounded-lg hover:bg-amber-50 flex items-center gap-2"
             onClick={() => setMobileOpen(false)}
           >
-            <TrendingUp size={16} />
+            <TrendingUp size={15} />
             Fırsatlar
           </Link>
           <Link
             href="/karsilastir"
-            className="text-purple-700 font-medium py-2"
+            className="text-purple-700 font-semibold py-2 px-3 rounded-lg hover:bg-purple-50"
             onClick={() => setMobileOpen(false)}
           >
             Karşılaştır

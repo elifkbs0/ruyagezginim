@@ -39,7 +39,7 @@ export function ProductCard({
   const priceDiff = priceMax > priceMin ? Math.round(((priceMax - priceMin) / priceMin) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-purple-100 overflow-hidden card-hover">
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
       {/* Image */}
       <Link href={`/urun/${slug}`} className="block relative aspect-square bg-gray-50">
         {imageUrl ? (
@@ -57,57 +57,46 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Discount badge */}
         {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
             -%{discount}
           </div>
         )}
 
-        {/* Platform count badge */}
         {platformCount > 1 && (
-          <div className="absolute top-2 right-2 bg-purple-700 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+          <div className="absolute top-2 right-2 bg-gray-800 text-white text-xs font-semibold px-2 py-0.5 rounded">
             {platformCount} mağaza
           </div>
         )}
       </Link>
 
-      {/* Content */}
-      <div className="p-3">
-        {/* Brand */}
+      <div className="p-3 space-y-2">
         {brand && (
-          <p className="text-xs text-purple-500 font-medium uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             {brand}
           </p>
         )}
 
-        {/* Name */}
         <Link href={`/urun/${slug}`}>
-          <h3 className="text-sm text-gray-800 font-medium line-clamp-2 mb-2 hover:text-purple-700 transition-colors leading-snug">
+          <h3 className="text-sm text-gray-800 font-medium line-clamp-2 hover:text-purple-700 transition-colors leading-snug">
             {name}
           </h3>
         </Link>
 
-        {/* Rating */}
         {rating && (
-          <div className="flex items-center gap-1 mb-2">
-            <Star
-              size={12}
-              className="text-amber-400 fill-amber-400"
-            />
-            <span className="text-xs text-gray-600 font-medium">
-              {rating.toFixed(1)}
-            </span>
+          <div className="flex items-center gap-1">
+            <Star size={11} className="text-amber-400 fill-amber-400" />
+            <span className="text-xs text-gray-600 font-medium">{rating.toFixed(1)}</span>
             {reviewCount && (
               <span className="text-xs text-gray-400">({reviewCount.toLocaleString("tr-TR")})</span>
             )}
           </div>
         )}
 
-        {/* Price */}
-        <div className="mb-3">
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-bold text-gray-900">
+        {/* Fiyat */}
+        <div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl font-extrabold text-gray-900">
               {formatPrice(bestPrice)}
             </span>
             {originalPrice && originalPrice > bestPrice && (
@@ -116,32 +105,28 @@ export function ProductCard({
               </span>
             )}
           </div>
-
-          {/* Platform */}
           <div
-            className="inline-flex items-center gap-1 text-xs mt-0.5 px-1.5 py-0.5 rounded"
-            style={{ backgroundColor: platform.bg, color: platform.color }}
+            className="inline-flex items-center text-xs mt-0.5 font-semibold"
+            style={{ color: platform.color }}
           >
-            {platform.label}
+            {platform.label}&apos;da
           </div>
         </div>
 
-        {/* Price range if multiple platforms */}
         {platformCount > 1 && priceMax > priceMin && (
-          <div className="flex items-center gap-1 text-xs text-gray-500 mb-3 bg-green-50 px-2 py-1 rounded-lg">
-            <TrendingDown size={11} className="text-green-600" />
+          <div className="flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+            <TrendingDown size={11} />
             <span>
-              {formatPrice(priceMin)} – {formatPrice(priceMax)} ({priceDiff}% fark)
+              {formatPrice(priceMin)} – {formatPrice(priceMax)} (%{priceDiff} tasarruf imkânı)
             </span>
           </div>
         )}
 
-        {/* CTA */}
         <a
           href={bestUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full text-sm font-semibold py-2 rounded-xl dream-gradient text-white hover:opacity-90 transition-opacity"
+          className="flex items-center justify-center gap-1.5 w-full text-sm font-semibold py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white transition-colors"
         >
           En İyi Fiyata Git
           <ExternalLink size={13} />
