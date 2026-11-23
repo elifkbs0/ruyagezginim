@@ -3,6 +3,7 @@ import { searchAllPlatforms, hasProxy } from "@/lib/scrapers";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { categorize } from "@/lib/categorize";
+import { matchesQuery, queryTokens } from "@/lib/search-match";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -20,60 +21,41 @@ export async function GET(request: NextRequest) {
     create: { query: q.toLowerCase(), count: 1 },
   }).catch(() => {});
 
-  // DB cache (products updated in last 2 hours)
-  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-  const words = q.split(/\s+/).filter(w => w.length > 1);
-  const cached = await db.product.findMany({
-    where: {
-      OR: [
-        { name: { contains: q } },
-        { brand: { contains: q } },
-        ...words.map(w => ({ name: { contains: w } })),
-        ...words.map(w => ({ brand: { contains: w } })),
-      ],
-      updatedAt: { gte: twoHoursAgo },
-    },
-    include: {
-      listings: {
-        orderBy: { currentPrice: "asc" },
+  // Fetch candidates by the longest query word (raw and accent-folded, since SQLite
+  // LIKE only ignores case for ASCII), then keep exact matches in JS.
+  const tokens = queryTokens(q);
+  const rawWords = q.toLocaleLowerCase("tr-TR").split(/\s+/).filter(Boolean);
+  const anchor = [...rawWords].sort((a, b) => b.length - a.length)[0] ?? q;
+  const anchorFolded = [...tokens].sort((a, b) => b.length - a.length)[0] ?? anchor;
+  const findLocal = async (since?: Date) => {
+    const rows = await db.product.findMany({
+      where: {
+        OR: [{ name: { contains: anchor } }, { name: { contains: anchorFolded } }],
+        listings: { some: {} },
+        ...(since && { updatedAt: { gte: since } }),
       },
-    },
-    take: 24,
-    orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
-  });
+      include: { listings: { orderBy: { currentPrice: "asc" } } },
+      take: 500,
+      orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
+    });
+    return rows.filter((p) => matchesQuery(p.name, q)).slice(0, 48);
+  };
 
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const cached = await findLocal(twoHoursAgo);
   if (cached.length > 0) {
     return NextResponse.json({ products: cached, source: "cache", proxy: hasProxy() });
   }
 
-  // Scrape fresh data (needs SCRAPER_API_KEY or SCRAPINGBEE_KEY in .env)
-  const scraped = await searchAllPlatforms(q);
+  // Scrape fresh data (needs SCRAPER_API_KEY or SCRAPINGBEE_KEY in .env).
+  // Store sites return loosely related items, so keep only ones that match the query.
+  const scraped = (await searchAllPlatforms(q)).filter((p) => matchesQuery(p.name, q));
 
-  // If no proxy key set, also look in DB without time filter
   if (!scraped.length) {
-    const anyExisting = await db.product.findMany({
-      where: {
-        OR: [
-          { name: { contains: q } },
-          { brand: { contains: q } },
-          ...words.map(w => ({ name: { contains: w } })),
-          ...words.map(w => ({ brand: { contains: w } })),
-        ],
-      },
-      include: {
-        listings: { orderBy: { currentPrice: "asc" } },
-      },
-      take: 24,
-      orderBy: { viewCount: "desc" },
-    });
-
     return NextResponse.json({
-      products: anyExisting,
+      products: await findLocal(),
       source: "db_fallback",
       proxy: hasProxy(),
-      tip: !hasProxy()
-        ? "SCRAPER_API_KEY veya SCRAPINGBEE_KEY ekleyerek gerçek zamanlı fiyatları etkinleştirin"
-        : undefined,
     });
   }
 
