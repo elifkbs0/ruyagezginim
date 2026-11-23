@@ -13,7 +13,11 @@ export async function getTopDeals({ limit, perCategory }: { limit: number; perCa
   const perCategoryCount = new Map<string, number>();
 
   return listings
-    .filter((l) => l.originalPrice! > l.currentPrice)
+    .map((l) => ({
+      ...l,
+      image: l.imageUrl ?? l.product.imageUrl ?? l.product.listings.find((x) => x.imageUrl)?.imageUrl ?? null,
+    }))
+    .filter((l) => l.image && l.originalPrice! > l.currentPrice)
     .sort((a, b) => discountPercent(b.originalPrice!, b.currentPrice) - discountPercent(a.originalPrice!, a.currentPrice))
     .filter((l) => {
       if (seenProducts.has(l.productId)) return false;
@@ -23,9 +27,5 @@ export async function getTopDeals({ limit, perCategory }: { limit: number; perCa
       perCategoryCount.set(l.product.category, count + 1);
       return true;
     })
-    .slice(0, limit)
-    .map((l) => ({
-      ...l,
-      image: l.imageUrl ?? l.product.imageUrl ?? l.product.listings.find((x) => x.imageUrl)?.imageUrl ?? null,
-    }));
+    .slice(0, limit);
 }
