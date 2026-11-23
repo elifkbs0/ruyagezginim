@@ -2,7 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { slugify } from "../lib/utils";
 
-const adapter = new PrismaLibSql({ url: "file:./dev.db" });
+const dbUrl = process.env.DATABASE_URL ?? "file:./dev.db";
+const adapter = new PrismaLibSql({ url: dbUrl });
 const db = new PrismaClient({ adapter });
 
 const DEMO_PRODUCTS = [
