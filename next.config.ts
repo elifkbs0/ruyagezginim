@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
         destination: "https://www.ruyagezginim.com/:path*",
         permanent: true,
       },
+      ...["/black-friday", "/efsane-cuma", "/efsane-kasim", "/kasim-firsatlari"].map((source) => ({
+        source,
+        destination: "/kasim-indirimleri",
+        permanent: true,
+      })),
     ];
   },
   images: {

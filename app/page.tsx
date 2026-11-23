@@ -6,6 +6,7 @@ import { SearchWidget } from "@/components/search-widget";
 import { db } from "@/lib/db";
 import { ProductImage } from "@/components/product-image";
 import { getTopDeals } from "@/lib/deals";
+import { blackFridayDay, campaignYear, CAMPAIGN_PATH, isNovemberInIstanbul } from "@/lib/campaign";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,14 @@ export default async function HomePage() {
 
   return (
     <div className="bg-white">
+      {isNovemberInIstanbul() && (
+        <Link href={CAMPAIGN_PATH} className="block text-white" style={{ backgroundColor: "#EA580C" }}>
+          <div className="max-w-6xl mx-auto px-6 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold text-center">
+            <span>Kasım İndirimleri {campaignYear()} başladı · Black Friday {blackFridayDay(campaignYear())} Kasım</span>
+            <ArrowRight size={14} />
+          </div>
+        </Link>
+      )}
 
       {/* ─── HERO ─── */}
       <section className="border-b border-gray-100">

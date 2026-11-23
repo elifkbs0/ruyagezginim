@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: SITE_URL, lastModified: now, changeFrequency: "daily", priority: 1 },
+    { url: `${SITE_URL}/kasim-indirimleri`, lastModified: now, changeFrequency: "daily", priority: 0.95 },
     { url: `${SITE_URL}/firsatlar`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE_URL}/kategori`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     ...CATEGORIES.map((c) => ({

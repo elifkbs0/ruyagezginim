@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Menu, X } from "lucide-react";
+import { CAMPAIGN_PATH, isNovemberInIstanbul } from "@/lib/campaign";
 
 export function Header() {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const showCampaign = isNovemberInIstanbul();
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -55,6 +57,11 @@ export function Header() {
 
         {/* Nav links — desktop */}
         <nav className="hidden md:flex items-center gap-5 shrink-0">
+          {showCampaign && (
+            <Link href={CAMPAIGN_PATH} className="text-sm font-bold" style={{ color: "#EA580C" }}>
+              Kasım İndirimleri
+            </Link>
+          )}
           <Link href="/firsatlar" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
             Fırsatlar
           </Link>
@@ -81,6 +88,9 @@ export function Header() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-6 py-3 space-y-1">
+          {showCampaign && (
+            <Link href={CAMPAIGN_PATH} className="block text-sm font-bold py-2" style={{ color: "#EA580C" }} onClick={() => setMobileOpen(false)}>Kasım İndirimleri</Link>
+          )}
           <Link href="/firsatlar" className="block text-sm text-gray-700 py-2 font-medium" onClick={() => setMobileOpen(false)}>Fırsatlar</Link>
           <Link href="/kategori" className="block text-sm text-gray-700 py-2 font-medium" onClick={() => setMobileOpen(false)}>Kategoriler</Link>
           <Link href="/karsilastir" className="block text-sm font-bold py-2" style={{ color: "#EA580C" }} onClick={() => setMobileOpen(false)}>Karşılaştır</Link>

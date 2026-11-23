@@ -48,6 +48,7 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-gray-900 mb-3">Keşfet</h3>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/kasim-indirimleri" className={LINK}>Kasım indirimleri</Link></li>
               <li><Link href="/firsatlar" className={LINK}>Günün fırsatları</Link></li>
               <li><Link href="/karsilastir" className={LINK}>Ürün karşılaştır</Link></li>
               <li><Link href="/hakkimizda" className={LINK}>Hakkımızda</Link></li>
