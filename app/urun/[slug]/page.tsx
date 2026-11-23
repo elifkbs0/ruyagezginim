@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import { ProductImage } from "@/components/product-image";
 import { db } from "@/lib/db";
 import {
   formatPrice,
@@ -10,7 +10,7 @@ import {
 import { PriceChart } from "@/components/price-chart";
 import { AdSenseBanner } from "@/components/adsense";
 import { CompareButton } from "@/components/compare-button";
-import { ExternalLink, Star, TrendingDown, Package } from "lucide-react";
+import { ExternalLink, Star, TrendingDown } from "lucide-react";
 import type { Metadata } from "next";
 
 interface PageProps {
@@ -127,22 +127,8 @@ export default async function ProductPage({ params }: PageProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         {/* Image */}
-        <div className="bg-white rounded-2xl border border-purple-100 p-6 flex items-center justify-center min-h-64">
-          {mainImage ? (
-            <Image
-              src={mainImage}
-              alt={product.name}
-              width={400}
-              height={400}
-              className="max-h-80 object-contain"
-             
-            />
-          ) : (
-            <div className="text-gray-300 flex flex-col items-center gap-3">
-              <Package size={64} />
-              <span className="text-sm">Görsel yok</span>
-            </div>
-          )}
+        <div className="relative bg-white rounded-2xl border border-gray-200 overflow-hidden h-80">
+          <ProductImage src={mainImage} alt={product.name} sizes="(max-width: 1024px) 100vw, 50vw" className="object-contain p-6" />
         </div>
 
         {/* Details */}

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Star, ShoppingCart, TrendingDown, ExternalLink } from "lucide-react";
+import { Star, TrendingDown, ExternalLink } from "lucide-react";
+import { ProductImage } from "@/components/product-image";
 import { formatPrice, discountPercent, PLATFORMS, type Platform } from "@/lib/utils";
 
 export interface ProductCardProps {
@@ -42,21 +42,12 @@ export function ProductCard({
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group">
       {/* Image */}
       <Link href={`/urun/${slug}`} className="block relative aspect-square bg-gray-50">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={name}
-            fill
-            className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-           
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-200">
-            <ShoppingCart size={36} />
-            <span className="text-xs text-gray-300 font-medium">Görsel yok</span>
-          </div>
-        )}
+        <ProductImage
+          src={imageUrl}
+          alt={name}
+          className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
 
         {discount > 0 && (
           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">

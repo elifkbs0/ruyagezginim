@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.hepsiburada.com" },
       { protocol: "https", hostname: "*.amazon.com" },
       { protocol: "https", hostname: "*.amazonaws.com" },
+      { protocol: "https", hostname: "*.media-amazon.com" },
+      { protocol: "https", hostname: "*.ssl-images-amazon.com" },
       { protocol: "https", hostname: "*.n11.com" },
       { protocol: "https", hostname: "*.cloudfront.net" },
       { protocol: "https", hostname: "*.ciceksepeti.com" },

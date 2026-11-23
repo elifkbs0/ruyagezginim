@@ -3,7 +3,7 @@ import { ArrowRight, ExternalLink, Star, TrendingDown, Shield } from "lucide-rea
 import { CATEGORIES, formatPrice, discountPercent, PLATFORMS, type Platform } from "@/lib/utils";
 import { SearchWidget } from "@/components/search-widget";
 import { db } from "@/lib/db";
-import Image from "next/image";
+import { ProductImage } from "@/components/product-image";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +33,14 @@ export default async function HomePage() {
     })
     .slice(0, 4);
 
-  const heroImages = rawProducts
-    .slice(0, 6)
-    .map((p) => p.imageUrl ?? p.listings.find((l) => l.imageUrl)?.imageUrl)
-    .filter(Boolean) as string[];
+  const heroImages = [
+    ...new Set(
+      [
+        ...topDeals.map((d) => d.product.listings.find((l) => l.imageUrl)?.imageUrl),
+        ...rawProducts.map((p) => p.imageUrl ?? p.listings.find((l) => l.imageUrl)?.imageUrl),
+      ].filter(Boolean) as string[]
+    ),
+  ].slice(0, 6);
 
   return (
     <div className="bg-white">
@@ -72,10 +76,10 @@ export default async function HomePage() {
               ? heroImages.map((src, i) => (
                   <div
                     key={i}
-                    className="bg-gray-50 rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
+                    className="relative bg-gray-50 rounded-2xl overflow-hidden aspect-square"
                     style={{ transform: i % 2 === 1 ? "translateY(12px)" : "none" }}
                   >
-                    <Image src={src} alt="" width={120} height={120} className="object-contain p-3 w-full h-full" />
+                    <ProductImage src={src} alt="Ürün" sizes="180px" className="object-contain p-4" />
                   </div>
                 ))
               : [0, 1, 2, 3, 4, 5].map((i) => (
@@ -109,11 +113,7 @@ export default async function HomePage() {
                 return (
                   <div key={listing.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <Link href={`/urun/${listing.product.slug}`} className="block relative h-40 bg-gray-50">
-                      {img ? (
-                        <Image src={img} alt={listing.product.name} fill className="object-contain p-3" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
-                      )}
+                      <ProductImage src={img} alt={listing.product.name} />
                       <span className="absolute top-2 left-2 text-xs font-bold text-white px-2 py-0.5 rounded" style={{ backgroundColor: "#EA580C" }}>
                         -%{disc}
                       </span>
@@ -160,11 +160,7 @@ export default async function HomePage() {
                 return (
                   <div key={product.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <Link href={`/urun/${product.slug}`} className="block relative h-40 bg-gray-50">
-                      {img ? (
-                        <Image src={img} alt={product.name} fill className="object-contain p-3" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
-                      )}
+                      <ProductImage src={img} alt={product.name} />
                       {disc > 0 && (
                         <span className="absolute top-2 left-2 text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded">
                           -%{disc}
