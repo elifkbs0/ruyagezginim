@@ -70,7 +70,7 @@ export function ProductCard({
         )}
 
         <Link href={`/urun/${slug}`}>
-          <h3 className="text-sm text-gray-800 font-medium line-clamp-2 hover:text-purple-700 transition-colors leading-snug">
+          <h3 className="text-sm text-gray-800 font-medium line-clamp-2 hover:text-orange-600 transition-colors leading-snug">
             {name}
           </h3>
         </Link>
@@ -118,7 +118,7 @@ export function ProductCard({
           href={bestUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 w-full text-sm font-semibold py-2 rounded-lg bg-purple-700 hover:bg-purple-800 text-white transition-colors"
+          className="flex items-center justify-center gap-1.5 w-full text-sm font-semibold py-2 rounded-lg bg-gray-800 hover:bg-gray-900 text-white transition-colors"
         >
           En İyi Fiyata Git
           <ExternalLink size={13} />
