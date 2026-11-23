@@ -6,6 +6,7 @@ import { CATEGORIES } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Kategoriler",
   description: "Rüya gibi fiyatlar: tüm kategorilerde en ucuz fiyatları karşılaştır.",
+  alternates: { canonical: "/kategori" },
 };
 
 export const dynamic = "force-dynamic";

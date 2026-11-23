@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${cat.label} Fiyat Karşılaştırması`,
     description: `Rüya gibi fiyatlar: ${cat.label} ürünlerini Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti'nde karşılaştır.`,
+    alternates: { canonical: `/kategori/${cat.slug}` },
   };
 }
 

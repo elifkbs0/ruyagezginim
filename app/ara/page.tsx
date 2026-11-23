@@ -15,6 +15,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     description: q
       ? `${q} ürününü Trendyol, Hepsiburada, Amazon ve daha fazlasında karşılaştır.`
       : "Fiyat karşılaştır",
+    robots: { index: false, follow: true },
   };
 }
 
@@ -25,11 +26,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const sort = params.sort ?? "price_asc";
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-10">
       {query && (
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
-            <span className="text-purple-700">&ldquo;{query}&rdquo;</span> için
+            <span className="text-orange-600">&ldquo;{query}&rdquo;</span> için
             fiyat karşılaştırması
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -53,7 +54,7 @@ function SearchSkeleton() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl overflow-hidden border border-purple-100">
+        <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-200">
           <div className="skeleton aspect-square" />
           <div className="p-3 space-y-2">
             <div className="skeleton h-3 w-3/4" />

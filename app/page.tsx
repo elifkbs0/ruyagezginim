@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, ExternalLink, Star, TrendingDown, Shield } from "lucide-react";
 import { CATEGORIES, formatPrice, discountPercent, PLATFORMS, type Platform } from "@/lib/utils";
 import { SearchWidget } from "@/components/search-widget";
@@ -7,6 +8,10 @@ import { ProductImage } from "@/components/product-image";
 import { getTopDeals } from "@/lib/deals";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   const candidates = await db.product.findMany({

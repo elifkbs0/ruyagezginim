@@ -1,109 +1,72 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { CATEGORIES } from "@/lib/utils";
+
+const LINK = "text-gray-500 hover:text-orange-600 transition-colors";
 
 export function Footer() {
   return (
-    <footer className="bg-purple-950 text-purple-200 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full dream-gradient flex items-center justify-center">
-                <Sparkles size={16} className="text-white" />
-              </div>
-              <span className="font-bold text-white text-lg">
-                Rüya<span className="text-amber-400">Gezginim</span>
+    <footer className="border-t border-gray-200 bg-gray-50 mt-16">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="inline-flex items-center gap-2 mb-3">
+              <span
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black"
+                style={{ backgroundColor: "#EA580C" }}
+              >
+                R
               </span>
-            </div>
-            <p className="text-sm text-purple-300 leading-relaxed">
-              Trendyol, Hepsiburada, Amazon ve daha fazlasından en iyi
-              fiyatları karşılaştır. Rüya gibi fiyatlar, gerçek tasarruf.
+              <span className="font-black text-lg" style={{ letterSpacing: "-0.04em" }}>
+                <span style={{ color: "#EA580C" }}>Rüya</span>
+                <span className="text-gray-900">Gezginim</span>
+              </span>
+            </Link>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Rüya gibi fiyatlar, gerçek tasarruf. Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti fiyatlarını tek
+              aramada karşılaştır.
             </p>
           </div>
 
-          {/* Kategoriler */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Kategoriler</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Kategoriler</h3>
             <ul className="space-y-2 text-sm">
-              {["Elektronik", "Telefon", "Ev & Yaşam", "Moda", "Spor"].map(
-                (c) => (
-                  <li key={c}>
-                    <Link
-                      href={`/kategori/${c.toLowerCase().replace(/\s/g, "-")}`}
-                      className="hover:text-amber-400 transition-colors"
-                    >
-                      {c}
-                    </Link>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
-
-          {/* Platformlar */}
-          <div>
-            <h3 className="font-semibold text-white mb-4">Platformlar</h3>
-            <ul className="space-y-2 text-sm">
-              {[
-                "Trendyol",
-                "Hepsiburada",
-                "Amazon Türkiye",
-                "N11",
-                "Çiçeksepeti",
-              ].map((p) => (
-                <li key={p}>
-                  <span className="text-purple-300">{p}</span>
+              {CATEGORIES.slice(0, 6).map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/kategori/${c.slug}`} className={LINK}>
+                    {c.label}
+                  </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/kategori" className={LINK}>
+                  Tüm kategoriler
+                </Link>
+              </li>
             </ul>
           </div>
 
-          {/* Hakkında */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Hakkımızda</h3>
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Keşfet</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href="/hakkimizda"
-                  className="hover:text-amber-400 transition-colors"
-                >
-                  Hakkımızda
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/gizlilik"
-                  className="hover:text-amber-400 transition-colors"
-                >
-                  Gizlilik Politikası
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/kullanim"
-                  className="hover:text-amber-400 transition-colors"
-                >
-                  Kullanım Koşulları
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/iletisim"
-                  className="hover:text-amber-400 transition-colors"
-                >
-                  İletişim
-                </Link>
-              </li>
+              <li><Link href="/firsatlar" className={LINK}>Günün fırsatları</Link></li>
+              <li><Link href="/karsilastir" className={LINK}>Ürün karşılaştır</Link></li>
+              <li><Link href="/hakkimizda" className={LINK}>Hakkımızda</Link></li>
+              <li><Link href="/iletisim" className={LINK}>İletişim</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Yasal</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/gizlilik" className={LINK}>Gizlilik Politikası</Link></li>
+              <li><Link href="/kullanim" className={LINK}>Kullanım Koşulları</Link></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-purple-900 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-purple-400">
+        <div className="border-t border-gray-200 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-400">
           <p>© {new Date().getFullYear()} Rüya Gezginim. Tüm hakları saklıdır.</p>
-          <p className="text-xs">
-            Bu site bilgilendirme amaçlıdır. Fiyatlar değişkenlik gösterebilir.
-          </p>
+          <p>Fiyatlar bilgilendirme amaçlıdır, mağazada değişiklik gösterebilir.</p>
         </div>
       </div>
     </footer>

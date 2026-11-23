@@ -9,7 +9,7 @@ export const maxDuration = 120;
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim();
-  if (!q || q.length < 2) {
+  if (!q || q.length < 2 || q.length > 80) {
     return NextResponse.json({ error: "Geçersiz arama" }, { status: 400 });
   }
 

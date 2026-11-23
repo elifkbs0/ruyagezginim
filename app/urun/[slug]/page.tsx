@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { ProductImage } from "@/components/product-image";
 import { db } from "@/lib/db";
 import {
+  CATEGORIES,
   formatPrice,
   discountPercent,
   PLATFORMS,
@@ -19,11 +23,32 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await db.product.findUnique({ where: { slug } });
-  if (!product) return { title: "Ürün bulunamadı" };
+  const product = await db.product.findUnique({
+    where: { slug },
+    include: { listings: { orderBy: { currentPrice: "asc" }, take: 1 } },
+  });
+  if (!product) return { title: "Ürün bulunamadı", robots: { index: false } };
+  const best = product.listings[0];
+  const image = product.imageUrl ?? best?.imageUrl ?? undefined;
+  const title = `${product.name.slice(0, 60)} Fiyatları`;
+  const description = best
+    ? `${product.name} en ucuz ${formatPrice(best.currentPrice)}. Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti fiyatlarını karşılaştır, rüya gibi fiyatı kaçırma.`
+    : `${product.name} fiyatlarını Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti'nde karşılaştır.`;
+  const url = `/urun/${product.slug}`;
   return {
-    title: `${product.name} - Fiyat Karşılaştırması`,
-    description: `${product.name} ürününü Trendyol, Hepsiburada, Amazon ve daha fazlasında karşılaştır.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      locale: "tr_TR",
+      siteName: SITE_NAME,
+      url,
+      title,
+      description,
+      ...(image && { images: [{ url: image, alt: product.name }] }),
+    },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image && { images: [image] }) },
   };
 }
 
@@ -84,44 +109,57 @@ export default async function ProductPage({ params }: PageProps) {
     description: `${product.name} için en iyi fiyat karşılaştırması. Trendyol, Hepsiburada, Amazon ve daha fazlasında ${formatPrice(minPrice)}'den başlayan fiyatlar.`,
     offers: {
       "@type": "AggregateOffer",
-      lowPrice: (minPrice / 100).toFixed(2),
-      highPrice: (maxPrice / 100).toFixed(2),
+      lowPrice: minPrice.toFixed(2),
+      highPrice: maxPrice.toFixed(2),
       priceCurrency: "TRY",
       offerCount: product.listings.length,
       offers: product.listings.map((l) => ({
         "@type": "Offer",
-        price: (l.currentPrice / 100).toFixed(2),
+        price: l.currentPrice.toFixed(2),
         priceCurrency: "TRY",
-        availability: "https://schema.org/InStock",
+        availability: l.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         url: l.url,
-        seller: { "@type": "Organization", name: l.platform },
+        seller: { "@type": "Organization", name: PLATFORMS[l.platform as Platform]?.label ?? l.platform },
       })),
     },
-    ...(bestListing?.rating && {
+    ...(bestListing?.rating && bestListing.reviewCount && {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: bestListing.rating.toFixed(1),
-        reviewCount: bestListing.reviewCount ?? 1,
+        reviewCount: bestListing.reviewCount,
         bestRating: "5",
         worstRating: "1",
       },
     }),
   };
 
+  const category = CATEGORIES.find((c) => c.slug === product.category);
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: SITE_URL },
+      ...(category
+        ? [{ "@type": "ListItem", position: 2, name: category.label, item: `${SITE_URL}/kategori/${category.slug}` }]
+        : []),
+      { "@type": "ListItem", position: category ? 3 : 2, name: product.name, item: `${SITE_URL}/urun/${product.slug}` },
+    ],
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      {/* Breadcrumb */}
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      <JsonLd data={[jsonLd, breadcrumbJsonLd]} />
       <nav className="text-sm text-gray-400 mb-6">
-        <a href="/" className="hover:text-purple-700">Ana Sayfa</a>
-        {" / "}
-        <a href={`/kategori/${product.category}`} className="hover:text-purple-700 capitalize">
-          {product.category}
-        </a>
-        {" / "}
+        <Link href="/" className="hover:text-orange-600">Ana Sayfa</Link>
+        {category && (
+          <>
+            <span className="mx-2">/</span>
+            <Link href={`/kategori/${category.slug}`} className="hover:text-orange-600">
+              {category.label}
+            </Link>
+          </>
+        )}
+        <span className="mx-2">/</span>
         <span className="text-gray-600">{product.name.slice(0, 50)}</span>
       </nav>
 
@@ -134,7 +172,7 @@ export default async function ProductPage({ params }: PageProps) {
         {/* Details */}
         <div className="space-y-5">
           {product.brand && (
-            <p className="text-purple-600 font-semibold uppercase tracking-wide text-sm">
+            <p className="text-orange-600 font-semibold uppercase tracking-wide text-sm">
               {product.brand}
             </p>
           )}
@@ -144,7 +182,7 @@ export default async function ProductPage({ params }: PageProps) {
 
           {/* Best price */}
           {bestListing && (
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-5">
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
               <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide font-medium">
                 En İyi Fiyat
               </p>
@@ -199,7 +237,7 @@ export default async function ProductPage({ params }: PageProps) {
                 href={bestListing.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 dream-gradient text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl transition-colors"
               >
                 En İyi Fiyata Git
                 <ExternalLink size={15} />
@@ -232,9 +270,9 @@ export default async function ProductPage({ params }: PageProps) {
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Tüm Platformlardaki Fiyatlar
         </h2>
-        <div className="bg-white rounded-2xl border border-purple-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-purple-50 border-b border-purple-100">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-5 py-3 font-semibold text-gray-700">Platform</th>
                 <th className="text-right px-5 py-3 font-semibold text-gray-700">Fiyat</th>
@@ -243,7 +281,7 @@ export default async function ProductPage({ params }: PageProps) {
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-purple-50">
+            <tbody className="divide-y divide-gray-100">
               {product.listings.map((listing, idx) => {
                 const platform = PLATFORMS[listing.platform as Platform];
                 const disc = listing.originalPrice
@@ -293,7 +331,7 @@ export default async function ProductPage({ params }: PageProps) {
                         href={listing.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-purple-700 font-semibold hover:text-purple-900 border border-purple-200 px-3 py-1 rounded-lg hover:bg-purple-50 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs text-orange-700 font-semibold hover:text-orange-900 border border-orange-200 px-3 py-1 rounded-lg hover:bg-orange-50 transition-colors"
                       >
                         Git <ExternalLink size={11} />
                       </a>
@@ -310,7 +348,7 @@ export default async function ProductPage({ params }: PageProps) {
       {chartData.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Fiyat Geçmişi</h2>
-          <div className="bg-white rounded-2xl border border-purple-100 p-5">
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <PriceChart data={chartData} />
           </div>
         </section>

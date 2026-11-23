@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Ürün Karşılaştır",
   description: "Birden fazla ürünü yan yana karşılaştır, en iyi fiyatı bul.",
+  alternates: { canonical: "/karsilastir" },
 };
 
 export const dynamic = "force-dynamic";
@@ -43,15 +44,12 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
   ) as Platform[];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-3xl p-8 mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <GitCompareArrows size={28} />
-          <h1 className="text-3xl font-bold">Ürün Karşılaştır</h1>
-        </div>
-        <p className="text-indigo-200">
-          Ürün sayfasından "Karşılaştır" butonuyla ürün ekle, yan yana karşılaştır.
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="mb-8">
+        <p className="text-sm font-semibold mb-2" style={{ color: "#EA580C" }}>Karşılaştırma</p>
+        <h1 className="text-3xl font-black text-gray-900" style={{ letterSpacing: "-0.02em" }}>Ürün karşılaştır</h1>
+        <p className="text-gray-500 mt-1">
+          Ürün sayfasındaki &quot;Karşılaştır&quot; butonuyla en fazla 4 ürün ekle, yan yana karşılaştır.
         </p>
       </div>
 
@@ -66,7 +64,7 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
           >
             <Plus size={18} />
             Ürün Ara
@@ -83,7 +81,7 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
                 {ordered.map((product) => (
                   <td key={product.id} className="p-3 text-center align-top">
                     <div className="bg-white rounded-2xl border border-gray-200 p-4">
-                      <Link href={`/urun/${product.slug}`} className="hover:text-purple-700">
+                      <Link href={`/urun/${product.slug}`} className="hover:text-orange-600">
                         <p className="text-xs text-gray-400 mb-1">{product.brand}</p>
                         <p className="font-semibold text-gray-800 text-sm leading-tight line-clamp-2">
                           {product.name}
@@ -96,7 +94,7 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
             </thead>
             <tbody>
               {/* Best price row */}
-              <tr className="bg-purple-50">
+              <tr className="bg-orange-50">
                 <td className="p-3 text-sm font-semibold text-gray-600 rounded-l-xl">En İyi Fiyat</td>
                 {ordered.map((product) => {
                   const best = product.listings[0];
@@ -112,7 +110,7 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
                               -%{discountPercent(best.originalPrice, best.currentPrice)} indirim
                             </p>
                           )}
-                          <p className="text-xs text-purple-600 font-medium mt-1">
+                          <p className="text-xs text-orange-600 font-medium mt-1">
                             {PLATFORMS[best.platform as Platform]?.label ?? best.platform}
                           </p>
                         </div>
@@ -168,7 +166,7 @@ export default async function KarsilastirPage({ searchParams }: PageProps) {
                               href={listing.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 mt-1"
+                              className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 mt-1"
                             >
                               Git <ExternalLink size={10} />
                             </a>

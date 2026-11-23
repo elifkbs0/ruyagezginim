@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Fırsatlar - En Büyük İndirimler",
   description: "Bugünün en büyük indirimleri ve fırsatları. Rüya gibi fiyatlarla alışveriş yap.",
+  alternates: { canonical: "/firsatlar" },
 };
 
 export const dynamic = "force-dynamic";

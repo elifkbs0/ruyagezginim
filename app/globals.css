@@ -53,15 +53,10 @@ html { scroll-behavior: smooth; }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #e8e0f7 25%, #f0eaff 50%, #e8e0f7 75%);
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
-}
-
-/* Dream gradient */
-.dream-gradient {
-  background: linear-gradient(135deg, #6C3FC5 0%, #9B59B6 50%, #F59E0B 100%);
 }
 
 /* Card hover */
@@ -70,5 +65,5 @@ html { scroll-behavior: smooth; }
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(108, 63, 197, 0.15);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
 }

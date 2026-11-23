@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The production vercel.app alias serves the same pages; send it to the real domain
+  // so Google doesn't index duplicates. Preview deployments use other hostnames.
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "ruyagezginim.vercel.app" }],
+        destination: "https://www.ruyagezginim.com/:path*",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.dsmcdn.com" },

@@ -68,8 +68,8 @@ export function SearchResults({ query, platform, sort }: SearchResultsProps) {
 
   if (loading) {
     return (
-      <div className="text-center py-16 text-purple-400">
-        <div className="inline-block w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4" />
+      <div className="text-center py-16 text-gray-400">
+        <div className="inline-block w-10 h-10 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4" />
         <p className="font-medium">Rüya gibi fiyatlar aranıyor...</p>
         <p className="text-sm text-gray-400 mt-1">Tüm platformlar taranıyor</p>
       </div>
@@ -131,8 +131,8 @@ export function SearchResults({ query, platform, sort }: SearchResultsProps) {
   return (
     <div>
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-white rounded-2xl border border-purple-100">
-        <SlidersHorizontal size={16} className="text-purple-500" />
+      <div className="flex flex-wrap items-center gap-3 mb-6 p-4 bg-white rounded-2xl border border-gray-200">
+        <SlidersHorizontal size={16} className="text-orange-500" />
 
         {/* Platform filter */}
         <div className="flex flex-wrap gap-2">
@@ -140,8 +140,8 @@ export function SearchResults({ query, platform, sort }: SearchResultsProps) {
             onClick={() => setActivePlatform("all")}
             className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
               activePlatform === "all"
-                ? "bg-purple-700 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-purple-100"
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-orange-50"
             }`}
           >
             Tümü ({products.length})
@@ -158,7 +158,7 @@ export function SearchResults({ query, platform, sort }: SearchResultsProps) {
                 className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
                   activePlatform === p
                     ? "text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-purple-100"
+                    : "bg-gray-100 text-gray-600 hover:bg-orange-50"
                 }`}
                 style={
                   activePlatform === p
@@ -177,7 +177,7 @@ export function SearchResults({ query, platform, sort }: SearchResultsProps) {
           <select
             value={activeSort}
             onChange={(e) => setActiveSort(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-purple-400 bg-white"
+            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:border-orange-400 bg-white"
           >
             <option value="price_asc">Fiyat: Ucuzdan Pahalıya</option>
             <option value="price_desc">Fiyat: Pahalıdan Ucuza</option>
