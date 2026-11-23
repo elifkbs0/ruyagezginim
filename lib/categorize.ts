@@ -10,6 +10,10 @@ const RULES: { slug: string; keywords: string[] }[] = [
     keywords: ["oyuncak", "lego", "puzzle", "yapboz", "bebek bezi", "bebek arabası", "mama sandalyesi", "biberon", "emzik", "peluş"],
   },
   {
+    slug: "otomotiv",
+    keywords: ["oto ", "araç", "araba", "lastik", "motor yağı", "silecek", "akü", "oto koltuk", "navigasyon"],
+  },
+  {
     slug: "telefon-aksesuar",
     keywords: ["iphone", "galaxy s", "galaxy a", "galaxy z", "redmi", "cep telefon", "akıllı telefon", "telefon", "kılıf", "ekran koruyucu", "şarj aleti", "şarj kablo", "powerbank", "power bank"],
   },
@@ -36,10 +40,6 @@ const RULES: { slug: string; keywords: string[] }[] = [
   {
     slug: "kitap-muzik",
     keywords: ["kitap", "roman", "plak", "gitar", "piyano", "keman", "kitaplık"],
-  },
-  {
-    slug: "otomotiv",
-    keywords: ["oto ", "araç", "araba", "lastik", "motor yağı", "silecek", "akü", "oto koltuk", "navigasyon"],
   },
 ];
 
