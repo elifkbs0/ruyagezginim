@@ -18,69 +18,72 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="flex items-center gap-4 h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-black"
-              style={{ background: "#6D28D9" }}
-            >
-              R
-            </div>
-            <span className="font-black text-lg hidden sm:block" style={{ color: "#111827", letterSpacing: "-0.03em" }}>
-              Rüya<span style={{ color: "#6D28D9" }}>Gezginim</span>
-            </span>
-          </Link>
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-6">
 
-          {/* Search */}
-          <form
-            onSubmit={handleSearch}
-            className="flex-1 flex items-center bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 gap-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all"
-          >
-            <Search size={15} className="text-gray-400 shrink-0" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ürün, marka veya kategori ara..."
-              className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
-            />
-          </form>
+        {/* Logo */}
+        <Link href="/" className="shrink-0 flex items-center gap-1.5">
+          <span className="font-black text-xl" style={{ color: "#EA580C", letterSpacing: "-0.04em" }}>
+            Rüya
+          </span>
+          <span className="font-black text-xl text-gray-900" style={{ letterSpacing: "-0.04em" }}>
+            Gezginim
+          </span>
+        </Link>
 
-          {/* Nav - desktop */}
-          <nav className="hidden md:flex items-center gap-1 shrink-0">
-            <Link href="/kategori" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-              Kategoriler
-            </Link>
-            <Link href="/firsatlar" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-              Fırsatlar
-            </Link>
-            <Link
-              href="/karsilastir"
-              className="ml-1 text-sm text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-              style={{ backgroundColor: "#6D28D9" }}
-            >
-              Karşılaştır
-            </Link>
-          </nav>
-
+        {/* Search */}
+        <form
+          onSubmit={handleSearch}
+          className="flex-1 max-w-xl flex items-center border border-gray-300 rounded-lg px-3 h-9 gap-2 focus-within:border-gray-400 transition-colors bg-white"
+        >
+          <Search size={14} className="text-gray-400 shrink-0" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ürün ara..."
+            className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
+          />
           <button
-            className="md:hidden text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Menü"
+            type="submit"
+            className="text-xs font-semibold text-white px-3 py-1 rounded"
+            style={{ backgroundColor: "#EA580C" }}
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            Ara
           </button>
-        </div>
+        </form>
+
+        {/* Nav links — desktop */}
+        <nav className="hidden md:flex items-center gap-5 shrink-0">
+          <Link href="/firsatlar" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+            Fırsatlar
+          </Link>
+          <Link href="/kategori" className="text-sm text-gray-600 hover:text-gray-900 font-medium">
+            Kategoriler
+          </Link>
+          <Link
+            href="/karsilastir"
+            className="text-sm font-bold text-white px-4 py-1.5 rounded-lg"
+            style={{ backgroundColor: "#1F2937" }}
+          >
+            Karşılaştır
+          </Link>
+        </nav>
+
+        <button
+          className="md:hidden text-gray-500 p-1"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Menü"
+        >
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 px-6 py-3 space-y-1 bg-white">
-          <Link href="/kategori" className="block text-sm text-gray-700 font-medium py-2.5 px-3 rounded-lg hover:bg-gray-50" onClick={() => setMobileOpen(false)}>Kategoriler</Link>
-          <Link href="/firsatlar" className="block text-sm text-gray-700 font-medium py-2.5 px-3 rounded-lg hover:bg-gray-50" onClick={() => setMobileOpen(false)}>Fırsatlar</Link>
-          <Link href="/karsilastir" className="block text-sm font-semibold py-2.5 px-3 rounded-lg" style={{ color: "#6D28D9" }} onClick={() => setMobileOpen(false)}>Karşılaştır</Link>
+        <div className="md:hidden border-t border-gray-100 bg-white px-6 py-3 space-y-1">
+          <Link href="/firsatlar" className="block text-sm text-gray-700 py-2 font-medium" onClick={() => setMobileOpen(false)}>Fırsatlar</Link>
+          <Link href="/kategori" className="block text-sm text-gray-700 py-2 font-medium" onClick={() => setMobileOpen(false)}>Kategoriler</Link>
+          <Link href="/karsilastir" className="block text-sm font-bold py-2" style={{ color: "#EA580C" }} onClick={() => setMobileOpen(false)}>Karşılaştır</Link>
         </div>
       )}
     </header>

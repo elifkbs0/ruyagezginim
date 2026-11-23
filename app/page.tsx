@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { TrendingDown, Shield, ArrowRight, ExternalLink, Star } from "lucide-react";
+import { ArrowRight, ExternalLink, Star, TrendingDown, Shield } from "lucide-react";
 import { CATEGORIES, formatPrice, discountPercent, PLATFORMS, type Platform } from "@/lib/utils";
 import { SearchWidget } from "@/components/search-widget";
-import { ProductCard } from "@/components/product-card";
 import { db } from "@/lib/db";
 import Image from "next/image";
 
@@ -23,7 +22,6 @@ export default async function HomePage() {
     take: 100,
   });
 
-  // Deduplicate by product ID — keep best deal per product
   const seenProducts = new Set<string>();
   const topDeals = dealListings
     .filter((d) => d.originalPrice && d.originalPrice > d.currentPrice)
@@ -35,96 +33,108 @@ export default async function HomePage() {
     })
     .slice(0, 4);
 
+  const heroImages = rawProducts
+    .slice(0, 6)
+    .map((p) => p.imageUrl ?? p.listings.find((l) => l.imageUrl)?.imageUrl)
+    .filter(Boolean) as string[];
+
   return (
-    <div>
+    <div className="bg-white">
+
       {/* ─── HERO ─── */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-16 flex flex-col items-center text-center">
-          <span className="inline-block bg-indigo-50 text-indigo-700 text-xs font-bold px-4 py-1.5 rounded-full tracking-widest uppercase mb-6 border border-indigo-100">
-            Fiyat Karşılaştırma
-          </span>
-          <h1 className="text-5xl sm:text-6xl font-black text-gray-900 tracking-tight mb-4" style={{ lineHeight: 1.1 }}>
-            En Ucuz Fiyatı<br />
-            <span style={{ color: "#6D28D9" }}>Anında Bul</span>
-          </h1>
-          <p className="text-gray-500 text-lg max-w-xl mb-8">
-            Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti — 5 platformu tek aramada karşılaştır.
-          </p>
-          <div className="w-full max-w-2xl mb-8">
-            <SearchWidget />
+      <section className="border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left */}
+          <div>
+            <p className="text-sm font-semibold mb-4" style={{ color: "#EA580C" }}>
+              Fiyat karşılaştırma sitesi
+            </p>
+            <h1 className="text-5xl font-black text-gray-900 leading-tight mb-4" style={{ letterSpacing: "-0.03em" }}>
+              Para biriktir,<br />
+              <span style={{ color: "#EA580C" }}>akıllıca alışveriş</span> yap.
+            </h1>
+            <p className="text-gray-500 text-lg mb-8 leading-relaxed">
+              Rüya Gezginim, Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti fiyatlarını karşılaştıran ücretsiz bir araçtır.
+            </p>
+            <div className="mb-6">
+              <SearchWidget />
+            </div>
+            <div className="flex flex-wrap gap-5 text-sm text-gray-400">
+              <span className="flex items-center gap-1.5"><Shield size={13} className="text-green-500" /> Ücretsiz, kayıt yok</span>
+              <span className="flex items-center gap-1.5"><TrendingDown size={13} className="text-blue-500" /> 30 günlük fiyat geçmişi</span>
+              <span className="flex items-center gap-1.5" style={{ color: "#EA580C", fontWeight: 600 }}>5 platform</span>
+            </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
-            <span className="flex items-center gap-2"><Shield size={14} className="text-emerald-500" /> Ücretsiz, kayıt yok</span>
-            <span className="flex items-center gap-2"><TrendingDown size={14} className="text-blue-500" /> 30 günlük fiyat geçmişi</span>
-            <span className="flex items-center gap-2 font-medium text-gray-500">
-              {["Trendyol", "Hepsiburada", "Amazon", "N11", "Çiçeksepeti"].join("  ·  ")}
-            </span>
+
+          {/* Right — floating product images */}
+          <div className="hidden lg:grid grid-cols-3 gap-3">
+            {heroImages.length > 0
+              ? heroImages.map((src, i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-50 rounded-2xl overflow-hidden aspect-square flex items-center justify-center"
+                    style={{ transform: i % 2 === 1 ? "translateY(12px)" : "none" }}
+                  >
+                    <Image src={src} alt="" width={120} height={120} className="object-contain p-3 w-full h-full" unoptimized />
+                  </div>
+                ))
+              : [0, 1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-gray-100 rounded-2xl aspect-square"
+                    style={{ transform: i % 2 === 1 ? "translateY(12px)" : "none" }}
+                  />
+                ))}
           </div>
         </div>
       </section>
 
       {/* ─── CONTENT ─── */}
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-16">
+      <div className="max-w-6xl mx-auto px-6 py-12 space-y-14">
 
         {/* ─── GÜNÜN FIRSATLARI ─── */}
         {topDeals.length > 0 && (
           <section>
-            <div className="flex items-end justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900">Günün Fırsatları</h2>
-                <p className="text-gray-400 text-sm mt-1">En yüksek indirim oranları</p>
-              </div>
-              <Link href="/firsatlar" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900">Günün Fırsatları</h2>
+              <Link href="/firsatlar" className="text-sm font-medium flex items-center gap-1" style={{ color: "#EA580C" }}>
                 Tümünü gör <ArrowRight size={14} />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {topDeals.map((listing) => {
                 const platform = PLATFORMS[listing.platform as Platform];
                 const disc = discountPercent(listing.originalPrice!, listing.currentPrice);
                 const img = listing.product.listings.find((l) => l.imageUrl)?.imageUrl;
                 return (
-                  <div key={listing.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                    {/* Top badge row */}
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
-                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
-                        -%{disc} indirim
-                      </span>
-                      <span className="text-xs font-semibold text-gray-500">{platform?.label ?? listing.platform}</span>
-                    </div>
-                    {/* Image */}
-                    <Link href={`/urun/${listing.product.slug}`} className="block relative h-44 bg-white">
+                  <div key={listing.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                    <Link href={`/urun/${listing.product.slug}`} className="block relative h-40 bg-gray-50">
                       {img ? (
-                        <Image src={img} alt={listing.product.name} fill className="object-contain p-4" unoptimized />
+                        <Image src={img} alt={listing.product.name} fill className="object-contain p-3" unoptimized />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-200 text-4xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
                       )}
+                      <span className="absolute top-2 left-2 text-xs font-bold text-white px-2 py-0.5 rounded" style={{ backgroundColor: "#EA580C" }}>
+                        -%{disc}
+                      </span>
                     </Link>
-                    <div className="p-4">
+                    <div className="p-3">
+                      <p className="text-xs text-gray-500 mb-1">{platform?.label ?? listing.platform}</p>
                       <Link href={`/urun/${listing.product.slug}`}>
-                        <p className="text-sm font-semibold text-gray-800 line-clamp-2 hover:text-indigo-700 mb-3 leading-snug">{listing.product.name}</p>
+                        <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-orange-600 leading-snug mb-2">{listing.product.name}</p>
                       </Link>
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-xl font-black text-gray-900">{formatPrice(listing.currentPrice)}</span>
-                        <span className="text-sm text-gray-400 line-through">{formatPrice(listing.originalPrice!)}</span>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-lg font-black text-gray-900">{formatPrice(listing.currentPrice)}</span>
+                        <span className="text-xs text-gray-400 line-through">{formatPrice(listing.originalPrice!)}</span>
                       </div>
-                      <p className="text-xs text-emerald-600 font-semibold mb-3">
-                        {formatPrice(listing.originalPrice! - listing.currentPrice)} tasarruf
-                      </p>
-                      {listing.rating && (
-                        <div className="flex items-center gap-1 text-xs text-gray-400 mb-3">
-                          <Star size={11} className="text-amber-400 fill-amber-400" />
-                          <span className="font-medium text-gray-600">{listing.rating.toFixed(1)}</span>
-                          {listing.reviewCount && <span>({listing.reviewCount.toLocaleString("tr-TR")} yorum)</span>}
-                        </div>
-                      )}
                       <a
                         href={listing.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                        className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-bold text-white transition-colors"
+                        style={{ backgroundColor: "#EA580C" }}
                       >
-                        Fırsata Git <ExternalLink size={13} />
+                        Fırsata Git <ExternalLink size={11} />
                       </a>
                     </div>
                   </div>
@@ -137,33 +147,64 @@ export default async function HomePage() {
         {/* ─── POPÜLER ÜRÜNLER ─── */}
         {rawProducts.length > 0 && (
           <section>
-            <div className="mb-6">
-              <h2 className="text-2xl font-black text-gray-900">Popüler Ürünler</h2>
-              <p className="text-gray-400 text-sm mt-1">En çok incelenen ürünler</p>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-bold text-gray-900">Popüler Ürünler</h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {rawProducts.map((product) => {
                 const listings = product.listings;
                 if (!listings.length) return null;
                 const best = listings[0];
-                const prices = listings.map((l) => l.currentPrice);
+                const img = product.imageUrl ?? listings.find((l) => l.imageUrl)?.imageUrl;
+                const disc = best.originalPrice ? discountPercent(best.originalPrice, best.currentPrice) : 0;
                 return (
-                  <ProductCard
-                    key={product.id}
-                    slug={product.slug}
-                    name={product.name}
-                    imageUrl={product.imageUrl ?? listings.find((l) => l.imageUrl)?.imageUrl ?? undefined}
-                    brand={product.brand ?? undefined}
-                    bestPrice={best.currentPrice}
-                    bestPlatform={best.platform as Platform}
-                    bestUrl={best.url}
-                    originalPrice={best.originalPrice ?? undefined}
-                    rating={best.rating ?? undefined}
-                    reviewCount={best.reviewCount ?? undefined}
-                    platformCount={listings.length}
-                    priceMin={Math.min(...prices)}
-                    priceMax={Math.max(...prices)}
-                  />
+                  <div key={product.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                    <Link href={`/urun/${product.slug}`} className="block relative h-40 bg-gray-50">
+                      {img ? (
+                        <Image src={img} alt={product.name} fill className="object-contain p-3" unoptimized />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">📦</div>
+                      )}
+                      {disc > 0 && (
+                        <span className="absolute top-2 left-2 text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded">
+                          -%{disc}
+                        </span>
+                      )}
+                      {listings.length > 1 && (
+                        <span className="absolute top-2 right-2 text-xs font-semibold bg-gray-800 text-white px-2 py-0.5 rounded">
+                          {listings.length} mağaza
+                        </span>
+                      )}
+                    </Link>
+                    <div className="p-3">
+                      {product.brand && <p className="text-xs text-gray-400 mb-0.5 font-medium">{product.brand}</p>}
+                      <Link href={`/urun/${product.slug}`}>
+                        <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-orange-600 leading-snug mb-2">{product.name}</p>
+                      </Link>
+                      {best.rating && (
+                        <div className="flex items-center gap-1 mb-1.5">
+                          <Star size={11} className="text-amber-400 fill-amber-400" />
+                          <span className="text-xs text-gray-600">{best.rating.toFixed(1)}</span>
+                          {best.reviewCount && <span className="text-xs text-gray-400">({best.reviewCount.toLocaleString("tr-TR")})</span>}
+                        </div>
+                      )}
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-lg font-black text-gray-900">{formatPrice(best.currentPrice)}</span>
+                        {best.originalPrice && best.originalPrice > best.currentPrice && (
+                          <span className="text-xs text-gray-400 line-through">{formatPrice(best.originalPrice)}</span>
+                        )}
+                      </div>
+                      <a
+                        href={best.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-bold text-white transition-colors"
+                        style={{ backgroundColor: "#1F2937" }}
+                      >
+                        En İyi Fiyata Git <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -172,52 +213,41 @@ export default async function HomePage() {
 
         {/* ─── KATEGORİLER ─── */}
         <section>
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="text-2xl font-black text-gray-900">Kategoriler</h2>
-            <Link href="/kategori" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-bold text-gray-900">Kategoriler</h2>
+            <Link href="/kategori" className="text-sm font-medium flex items-center gap-1" style={{ color: "#EA580C" }}>
               Tümü <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
             {CATEGORIES.map((cat) => (
               <Link
                 key={cat.slug}
                 href={`/kategori/${cat.slug}`}
-                className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all group text-center"
+                className="flex flex-col items-center gap-1.5 p-3 bg-gray-50 rounded-xl hover:bg-orange-50 transition-colors group text-center border border-transparent hover:border-orange-200"
               >
-                <span className="text-2xl">{cat.icon}</span>
-                <span className="text-xs font-semibold text-gray-600 group-hover:text-indigo-700 leading-tight">{cat.label}</span>
+                <span className="text-xl">{cat.icon}</span>
+                <span className="text-xs font-medium text-gray-600 group-hover:text-orange-700 leading-tight">{cat.label}</span>
               </Link>
             ))}
           </div>
         </section>
 
         {/* ─── NEDEN RG ─── */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <section className="bg-gray-50 rounded-2xl p-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
           {[
-            { icon: "🔍", title: "Tek Aramada 5 Platform", desc: "Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti'ni ayrı ayrı dolaşma." },
+            { icon: "🔍", title: "5 Platform Tek Aramada", desc: "Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti — ayrı ayrı gezmene gerek yok." },
             { icon: "📉", title: "Fiyat Geçmişi", desc: "30 günlük fiyat değişimini gör. Alım yapmanın tam zamanını hiç kaçırma." },
             { icon: "⚡", title: "Anlık & Ücretsiz", desc: "Kayıt olmadan, ücretsiz. Fiyatlar düzenli olarak güncellenir." },
           ].map((item) => (
-            <div key={item.title} className="bg-white rounded-2xl border border-gray-200 p-6">
-              <div className="text-3xl mb-3">{item.icon}</div>
-              <h3 className="font-bold text-gray-900 text-sm mb-2">{item.title}</h3>
+            <div key={item.title}>
+              <div className="text-2xl mb-2">{item.icon}</div>
+              <h3 className="font-bold text-gray-900 text-sm mb-1">{item.title}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </section>
 
-        {/* ─── CTA ─── */}
-        <section className="bg-indigo-600 rounded-2xl p-10 text-center">
-          <h2 className="text-3xl font-black text-white mb-3">Fırsatları Kaçırma</h2>
-          <p className="text-indigo-200 mb-6">Bugün indirime giren ürünleri hemen keşfet.</p>
-          <Link
-            href="/firsatlar"
-            className="inline-flex items-center gap-2 bg-white text-indigo-700 font-black px-8 py-3 rounded-xl hover:bg-indigo-50 transition-colors"
-          >
-            Günün Fırsatları <ArrowRight size={16} />
-          </Link>
-        </section>
       </div>
     </div>
   );
