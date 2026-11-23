@@ -10,23 +10,28 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const candidates = await db.product.findMany({
     where: { imageUrl: { not: null }, listings: { some: {} } },
-    take: 120,
-    orderBy: [{ updatedAt: "desc" }],
+    take: 400,
+    orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
     include: {
       listings: { orderBy: { currentPrice: "asc" } },
     },
   });
 
-  // Products have no brand/category yet, so vary the grid by the name's first word.
-  const seenFirstWords = new Set<string>();
-  const rawProducts = candidates
-    .filter((p) => {
-      const first = p.name.trim().split(/\s+/)[0]?.toLocaleLowerCase("tr-TR") ?? "";
-      if (seenFirstWords.has(first)) return false;
-      seenFirstWords.add(first);
-      return true;
-    })
-    .slice(0, 8);
+  // Round-robin across categories so one product type can't fill the grid.
+  const byCategory = new Map<string, typeof candidates>();
+  for (const p of candidates) {
+    const list = byCategory.get(p.category) ?? [];
+    list.push(p);
+    byCategory.set(p.category, list);
+  }
+  const categoryOrder = [...CATEGORIES.map((c) => c.slug), "genel"].filter((s) => byCategory.has(s));
+  const rawProducts: typeof candidates = [];
+  for (let round = 0; rawProducts.length < 8 && categoryOrder.some((s) => byCategory.get(s)!.length > round); round++) {
+    for (const slug of categoryOrder) {
+      const p = byCategory.get(slug)![round];
+      if (p && rawProducts.length < 8) rawProducts.push(p);
+    }
+  }
 
   const dealListings = await db.platformListing.findMany({
     where: { originalPrice: { not: null }, inStock: true },

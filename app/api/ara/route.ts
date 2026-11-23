@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchAllPlatforms, hasProxy } from "@/lib/scrapers";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
+import { categorize } from "@/lib/categorize";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -91,15 +92,16 @@ export async function GET(request: NextRequest) {
     const main = listings[0];
     // Deterministik slug: externalId ile sabit → aynı ürün her scrape'de aynı slug'a sahip
     const slug = slugify(main.name).slice(0, 55) + "-" + main.externalId.slice(-6);
+    const category = categorize(main.name, main.category);
 
     try {
       const product = await db.product.upsert({
         where: { slug },
-        update: { updatedAt: new Date(), imageUrl: main.imageUrl || null },
+        update: { updatedAt: new Date(), imageUrl: main.imageUrl || null, category },
         create: {
           name: main.name,
           brand: main.brand || null,
-          category: main.category || "Genel",
+          category,
           imageUrl: main.imageUrl || null,
           slug,
         },
