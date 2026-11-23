@@ -77,7 +77,16 @@ export default async function KasimIndirimleriPage() {
   const beforeBlackFriday = now < bfStart;
 
   const deals = await getTopDeals({ limit: 120, perCategory: 8 });
-  const top = deals.slice(0, 8);
+  // Top grid: at most 2 per category so one product type can't fill it.
+  const topPerCategory = new Map<string, number>();
+  const top = deals
+    .filter((d) => {
+      const n = topPerCategory.get(d.product.category) ?? 0;
+      if (n >= 2) return false;
+      topPerCategory.set(d.product.category, n + 1);
+      return true;
+    })
+    .slice(0, 8);
   const topIds = new Set(top.map((d) => d.id));
   const byCategory = new Map<string, Deal[]>();
   for (const d of deals) {
@@ -133,7 +142,7 @@ export default async function KasimIndirimleriPage() {
               <span className="mx-2">/</span>
               <span className="text-gray-600">Kasım İndirimleri {year}</span>
             </nav>
-            <p className="inline-block text-xs font-bold uppercase tracking-wider text-white px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#EA580C" }}>
+            <p className="inline-block text-xs font-bold tracking-wide text-white px-3 py-1 rounded-full mb-4" style={{ backgroundColor: "#EA580C" }}>
               Black Friday · Efsane Cuma
             </p>
             <h1 className="text-4xl sm:text-5xl font-black text-gray-900 leading-tight mb-4" style={{ letterSpacing: "-0.03em" }}>

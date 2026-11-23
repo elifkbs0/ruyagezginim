@@ -179,7 +179,7 @@ export default async function ProductPage({ params }: PageProps) {
         {/* Details */}
         <div className="space-y-5">
           {product.brand && (
-            <p className="text-orange-600 font-semibold uppercase tracking-wide text-sm">
+            <p className="text-orange-600 font-semibold text-sm">
               {product.brand}
             </p>
           )}
