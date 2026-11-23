@@ -47,14 +47,14 @@ export default async function HomePage() {
           {/* Left */}
           <div>
             <p className="text-sm font-semibold mb-4" style={{ color: "#EA580C" }}>
-              Fiyat karşılaştırma sitesi
+              Ücretsiz fiyat karşılaştırma
             </p>
             <h1 className="text-5xl font-black text-gray-900 leading-tight mb-4" style={{ letterSpacing: "-0.03em" }}>
-              Para biriktir,<br />
-              <span style={{ color: "#EA580C" }}>akıllıca alışveriş</span> yap.
+              <span style={{ color: "#EA580C" }}>Rüya gibi fiyatlar,</span><br />
+              gerçek tasarruf.
             </h1>
             <p className="text-gray-500 text-lg mb-8 leading-relaxed">
-              Rüya Gezginim, Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti fiyatlarını karşılaştıran ücretsiz bir araçtır.
+              Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti&apos;ni senin yerine gezeriz. Sen sadece en ucuzunu seç.
             </p>
             <div className="mb-6">
               <SearchWidget />
