@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const rawProducts = await db.product.findMany({
+    where: { imageUrl: { not: null } },
     take: 8,
-    orderBy: { viewCount: "desc" },
+    orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
     include: {
       listings: { orderBy: { currentPrice: "asc" } },
     },
