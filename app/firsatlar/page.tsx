@@ -1,13 +1,9 @@
-import { db } from "@/lib/db";
-import {
-  formatPrice,
-  discountPercent,
-  PLATFORMS,
-  type Platform,
-} from "@/lib/utils";
+import { formatPrice, discountPercent, PLATFORMS, type Platform } from "@/lib/utils";
 import { AdSenseBanner } from "@/components/adsense";
+import { ProductImage } from "@/components/product-image";
+import { getTopDeals } from "@/lib/deals";
 import Link from "next/link";
-import { TrendingDown, ExternalLink, Star } from "lucide-react";
+import { ExternalLink, Star } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -18,113 +14,69 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function FirsatlarPage() {
-  const deals = await db.platformListing.findMany({
-    where: {
-      originalPrice: { not: null },
-      inStock: true,
-    },
-    orderBy: [
-      { currentPrice: "asc" },
-    ],
-    include: {
-      product: true,
-    },
-    take: 24,
-  });
-
-  // Sort by discount percentage
-  const withDiscount = deals
-    .filter((d) => d.originalPrice && d.originalPrice > d.currentPrice)
-    .sort((a, b) => {
-      const discA = discountPercent(a.originalPrice!, a.currentPrice);
-      const discB = discountPercent(b.originalPrice!, b.currentPrice);
-      return discB - discA;
-    })
-    .slice(0, 20);
+  const deals = await getTopDeals({ limit: 24, perCategory: 4 });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-3xl p-8 mb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <TrendingDown size={28} />
-          <h1 className="text-3xl font-bold">Bugünün Fırsatları</h1>
-        </div>
-        <p className="text-orange-100 text-lg">
-          En büyük indirimler, en rüya gibi fiyatlar
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="mb-8">
+        <p className="text-sm font-semibold mb-2" style={{ color: "#EA580C" }}>
+          Günün fırsatları
         </p>
+        <h1 className="text-3xl font-black text-gray-900 mb-2" style={{ letterSpacing: "-0.02em" }}>
+          En büyük indirimler, rüya gibi fiyatlar
+        </h1>
+        <p className="text-gray-500">İndirim oranına göre sıralı. Her ürün bir kez gösterilir.</p>
       </div>
 
       <AdSenseBanner />
 
-      {withDiscount.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-5xl mb-4">🔍</p>
-          <p className="text-lg font-medium text-gray-600">Henüz fırsat yok</p>
-          <p className="text-sm mt-2">
-            Ürün araması yaptıkça fırsatlar burada görünecek.
-          </p>
+      {deals.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-lg font-medium text-gray-700">Henüz fırsat yok</p>
+          <p className="text-sm text-gray-500 mt-2">Ürün araması yaptıkça fırsatlar burada görünecek.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {withDiscount.map((listing) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {deals.map((listing) => {
             const platform = PLATFORMS[listing.platform as Platform];
             const disc = discountPercent(listing.originalPrice!, listing.currentPrice);
-
             return (
-              <div
-                key={listing.id}
-                className="bg-white rounded-2xl border border-orange-200 overflow-hidden card-hover"
-              >
-                <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 py-2 flex items-center justify-between">
-                  <span className="font-bold text-lg">-%{disc} İndirim!</span>
-                  <span
-                    className="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded-full"
-                  >
-                    {platform?.label ?? listing.platform}
+              <div key={listing.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
+                <Link href={`/urun/${listing.product.slug}`} className="block relative h-44 bg-gray-50">
+                  <ProductImage src={listing.image} alt={listing.product.name} />
+                  <span className="absolute top-2 left-2 text-xs font-bold text-white px-2 py-0.5 rounded" style={{ backgroundColor: "#EA580C" }}>
+                    -%{disc}
                   </span>
-                </div>
-
-                <div className="p-4">
+                </Link>
+                <div className="p-3 flex flex-col flex-1">
+                  <p className="text-xs text-gray-500 mb-1">{platform?.label ?? listing.platform}</p>
                   <Link href={`/urun/${listing.product.slug}`}>
-                    <h3 className="font-semibold text-gray-800 mb-3 line-clamp-2 hover:text-purple-700 transition-colors">
+                    <p className="text-sm font-medium text-gray-800 line-clamp-2 hover:text-orange-600 leading-snug mb-2">
                       {listing.product.name}
-                    </h3>
+                    </p>
                   </Link>
-
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-2xl font-bold text-gray-900">
-                      {formatPrice(listing.currentPrice)}
-                    </span>
-                    <span className="text-gray-400 line-through text-sm">
-                      {formatPrice(listing.originalPrice!)}
-                    </span>
-                  </div>
-
-                  <p className="text-green-700 font-semibold text-sm mb-4">
-                    {formatPrice(listing.originalPrice! - listing.currentPrice)} tasarruf
-                  </p>
-
                   {listing.rating && (
-                    <div className="flex items-center gap-1 text-sm text-gray-500 mb-4">
-                      <Star size={13} className="text-amber-400 fill-amber-400" />
-                      {listing.rating.toFixed(1)}
-                      {listing.reviewCount && (
-                        <span className="text-gray-400">
-                          ({listing.reviewCount.toLocaleString("tr-TR")} yorum)
-                        </span>
-                      )}
+                    <div className="flex items-center gap-1 mb-1.5 text-xs">
+                      <Star size={11} className="text-amber-400 fill-amber-400" />
+                      <span className="text-gray-600">{listing.rating.toFixed(1)}</span>
+                      {listing.reviewCount && <span className="text-gray-400">({listing.reviewCount.toLocaleString("tr-TR")})</span>}
                     </div>
                   )}
-
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-lg font-black text-gray-900">{formatPrice(listing.currentPrice)}</span>
+                    <span className="text-xs text-gray-400 line-through">{formatPrice(listing.originalPrice!)}</span>
+                  </div>
+                  <p className="text-xs text-green-700 font-semibold mb-3">
+                    {formatPrice(listing.originalPrice! - listing.currentPrice)} tasarruf
+                  </p>
                   <a
                     href={listing.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl transition-colors text-sm"
+                    className="mt-auto flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-bold text-white"
+                    style={{ backgroundColor: "#EA580C" }}
                   >
-                    Fırsata Git
-                    <ExternalLink size={13} />
+                    Fırsata Git <ExternalLink size={11} />
                   </a>
                 </div>
               </div>

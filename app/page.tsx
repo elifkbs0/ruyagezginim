@@ -4,6 +4,7 @@ import { CATEGORIES, formatPrice, discountPercent, PLATFORMS, type Platform } fr
 import { SearchWidget } from "@/components/search-widget";
 import { db } from "@/lib/db";
 import { ProductImage } from "@/components/product-image";
+import { getTopDeals } from "@/lib/deals";
 
 export const dynamic = "force-dynamic";
 
@@ -33,27 +34,12 @@ export default async function HomePage() {
     }
   }
 
-  const dealListings = await db.platformListing.findMany({
-    where: { originalPrice: { not: null }, inStock: true },
-    include: { product: { include: { listings: { orderBy: { currentPrice: "asc" } } } } },
-    take: 100,
-  });
-
-  const seenProducts = new Set<string>();
-  const topDeals = dealListings
-    .filter((d) => d.originalPrice && d.originalPrice > d.currentPrice)
-    .sort((a, b) => discountPercent(b.originalPrice!, b.currentPrice) - discountPercent(a.originalPrice!, a.currentPrice))
-    .filter((d) => {
-      if (seenProducts.has(d.product.id)) return false;
-      seenProducts.add(d.product.id);
-      return true;
-    })
-    .slice(0, 4);
+  const topDeals = await getTopDeals({ limit: 4, perCategory: 1 });
 
   const heroImages = [
     ...new Set(
       [
-        ...topDeals.map((d) => d.product.listings.find((l) => l.imageUrl)?.imageUrl),
+        ...topDeals.map((d) => d.image),
         ...rawProducts.map((p) => p.imageUrl ?? p.listings.find((l) => l.imageUrl)?.imageUrl),
       ].filter(Boolean) as string[]
     ),
@@ -126,7 +112,7 @@ export default async function HomePage() {
               {topDeals.map((listing) => {
                 const platform = PLATFORMS[listing.platform as Platform];
                 const disc = discountPercent(listing.originalPrice!, listing.currentPrice);
-                const img = listing.product.listings.find((l) => l.imageUrl)?.imageUrl;
+                const img = listing.image;
                 return (
                   <div key={listing.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                     <Link href={`/urun/${listing.product.slug}`} className="block relative h-40 bg-gray-50">
