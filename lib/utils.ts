@@ -17,6 +17,7 @@ export function formatPrice(price: number): string {
 export function slugify(text: string): string {
   return text
     .toLowerCase()
+    .replace(/\u0307/g, "")
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")
     .replace(/ş/g, "s")

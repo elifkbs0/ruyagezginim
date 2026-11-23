@@ -1,5 +1,6 @@
 import { searchTrendyol, searchHepsiburada, searchN11, searchAmazon, searchCiceksepeti, type ScrapedProduct } from "./trendyol";
 export { hasProxy } from "./proxy";
+import { cleanProductName } from "@/lib/clean-name";
 export type { ScrapedProduct };
 
 export async function searchAllPlatforms(query: string): Promise<ScrapedProduct[]> {
@@ -18,5 +19,7 @@ export async function searchAllPlatforms(query: string): Promise<ScrapedProduct[
   if (amazon.status === "fulfilled") results.push(...amazon.value);
   if (ciceksepeti.status === "fulfilled") results.push(...ciceksepeti.value);
 
-  return results;
+  return results
+    .map((p) => ({ ...p, name: cleanProductName(p.name), brand: p.brand ? cleanProductName(p.brand) : p.brand }))
+    .filter((p) => p.name.length > 0);
 }

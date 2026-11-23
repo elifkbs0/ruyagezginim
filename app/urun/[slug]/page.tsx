@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
@@ -70,7 +70,14 @@ export default async function ProductPage({ params }: PageProps) {
     },
   });
 
-  if (!product) notFound();
+  if (!product) {
+    // Slugs were rebuilt once when product names got cleaned; old links keep the
+    // same 6-character id suffix, so send them to the current URL.
+    const suffix = /-[A-Za-z0-9]{6}$/.test(slug) ? slug.slice(-7) : null;
+    const moved = suffix ? await db.product.findFirst({ where: { slug: { endsWith: suffix } }, select: { slug: true } }) : null;
+    if (moved) permanentRedirect(`/urun/${moved.slug}`);
+    notFound();
+  }
 
   // Increment view count
   db.product.update({
