@@ -8,11 +8,8 @@ declare global {
   }
 }
 
-// Auto Ads: Google otomatik olarak sayfaya en uygun yerlere reklam yerleştirir.
-// layout.tsx'teki script etiketi Auto Ads'i aktive eder.
-// Manuel reklam birimi için AdSense panelinden gerçek bir Slot ID alıp
-// aşağıdaki DEFAULT_SLOT'u güncelleyebilirsin.
-const DEFAULT_SLOT = ""; // Örn: "1234567890"
+// Responsive display unit "AnaSayfaBanner" in the AdSense account.
+const DEFAULT_SLOT = "2497588283";
 
 interface AdSenseProps {
   slot?: string;
@@ -45,5 +42,5 @@ export function AdSense({ slot = DEFAULT_SLOT, format = "auto", className = "" }
 }
 
 export function AdSenseBanner({ className = "" }: { className?: string }) {
-  return <AdSense format="horizontal" className={`my-6 ${className}`} />;
+  return <AdSense format="auto" className={`my-6 min-h-[100px] ${className}`} />;
 }

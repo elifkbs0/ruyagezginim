@@ -6,6 +6,7 @@ import { SearchWidget } from "@/components/search-widget";
 import { db } from "@/lib/db";
 import { ProductImage } from "@/components/product-image";
 import { getTopDeals } from "@/lib/deals";
+import { AdSenseBanner } from "@/components/adsense";
 import { blackFridayDay, campaignYear, CAMPAIGN_PATH, isNovemberInIstanbul } from "@/lib/campaign";
 
 export const dynamic = "force-dynamic";
@@ -223,6 +224,8 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        <AdSenseBanner />
 
         {/* ─── KATEGORİLER ─── */}
         <section>
