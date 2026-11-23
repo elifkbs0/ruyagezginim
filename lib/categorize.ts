@@ -30,12 +30,12 @@ const RULES: { slug: string; keywords: string[] }[] = [
     keywords: ["macbook", "laptop", "notebook", "bilgisayar", "tablet", "ipad", "monitör", "televizyon", "smart tv", "kulaklık", "airpods", "hoparlör", "soundbar", "kamera", "fotoğraf makine", "klavye", "mouse", "akıllı saat", "smartwatch", "ssd", "harddisk", "yazıcı", "modem", "drone", "headset", "wireless", "bluetooth"],
   },
   {
-    slug: "moda",
-    keywords: ["ayakkabı", "sneaker", "bot", "terlik", "tişört", "t-shirt", "gömlek", "elbise", "pantolon", "jean", "mont", "ceket", "kazak", "sweatshirt", "hırka", "etek", "çanta", "cüzdan", "kemer", "gözlük"],
+    slug: "spor-outdoor",
+    keywords: ["koşu bandı", "dambıl", "dumbbell", "yoga", "pilates", "bisiklet", "kamp", "çadır", "uyku tulumu", "fitness", "protein", "termos", "scooter"],
   },
   {
-    slug: "spor-outdoor",
-    keywords: ["koşu bandı", "dambıl", "dumbbell", "yoga", "pilates", "bisiklet", "kamp", "çadır", "uyku tulumu", "fitness", "protein", "spor", "termos", "scooter"],
+    slug: "moda",
+    keywords: ["ayakkabı", "sneaker", "bot", "terlik", "tişört", "t-shirt", "gömlek", "elbise", "pantolon", "jean", "mont", "ceket", "kazak", "sweatshirt", "hırka", "etek", "çanta", "cüzdan", "kemer", "gözlük"],
   },
   {
     slug: "kitap-muzik",
