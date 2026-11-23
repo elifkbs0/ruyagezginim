@@ -79,7 +79,7 @@ export default async function HomePage() {
                     className="relative bg-gray-50 rounded-2xl overflow-hidden aspect-square"
                     style={{ transform: i % 2 === 1 ? "translateY(12px)" : "none" }}
                   >
-                    <ProductImage src={src} alt="Ürün" sizes="180px" className="object-contain p-4" />
+                    <ProductImage src={src} alt="Rüya Gezginim" sizes="180px" className="object-contain p-4" />
                   </div>
                 ))
               : [0, 1, 2, 3, 4, 5].map((i) => (
