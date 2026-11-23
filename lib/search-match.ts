@@ -26,6 +26,14 @@ function tokenMatches(token: string, words: string[]): boolean {
   return words.some((w) => w.startsWith(token));
 }
 
+const ACCESSORY_WORDS = ["uyumlu", "icin", "kilif", "kilifi", "aparat", "aparati", "yedek", "koruyucu", "kapak", "kablo", "kablosu", "adaptor", "filtre", "filtresi", "lens", "lensi", "stand", "standi"];
+
+// Lower is better: the product itself before "X uyumlu" accessories.
+export function accessoryRank(name: string, query: string): number {
+  const queryWords = new Set(queryTokens(query));
+  return normalize(name).some((w) => ACCESSORY_WORDS.includes(w) && !queryWords.has(w)) ? 1 : 0;
+}
+
 export function matchesQuery(name: string, query: string): boolean {
   const tokens = queryTokens(query);
   if (!tokens.length) return false;

@@ -3,7 +3,7 @@ import { searchAllPlatforms, hasProxy } from "@/lib/scrapers";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/utils";
 import { categorize } from "@/lib/categorize";
-import { matchesQuery, queryTokens } from "@/lib/search-match";
+import { accessoryRank, matchesQuery, queryTokens } from "@/lib/search-match";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -38,12 +38,16 @@ export async function GET(request: NextRequest) {
       take: 500,
       orderBy: [{ viewCount: "desc" }, { updatedAt: "desc" }],
     });
-    return rows.filter((p) => matchesQuery(p.name, q)).slice(0, 48);
+    return rows
+      .filter((p) => matchesQuery(p.name, q))
+      .sort((a, b) => accessoryRank(a.name, q) - accessoryRank(b.name, q))
+      .slice(0, 48);
   };
 
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
   const cached = await findLocal(twoHoursAgo);
-  if (cached.length > 0) {
+  // A handful of cached hits usually means an earlier, narrower search; scrape for more.
+  if (cached.length >= 8) {
     return NextResponse.json({ products: cached, source: "cache", proxy: hasProxy() });
   }
 
@@ -133,6 +137,8 @@ export async function GET(request: NextRequest) {
       if (productWithListings) savedProducts.push(productWithListings);
     } catch {}
   }
+
+  savedProducts.sort((a, b) => accessoryRank(a.name, q) - accessoryRank(b.name, q));
 
   return NextResponse.json({
     products: savedProducts,
