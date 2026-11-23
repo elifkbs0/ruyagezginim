@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils";
 import { PriceChart } from "@/components/price-chart";
 import { AdSenseBanner } from "@/components/adsense";
+import { CompareButton } from "@/components/compare-button";
 import { ExternalLink, Star, TrendingDown, Package } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -180,6 +181,7 @@ export default async function ProductPage({ params }: PageProps) {
                 En İyi Fiyata Git
                 <ExternalLink size={15} />
               </a>
+              <CompareButton slug={product.slug} name={product.name} />
             </div>
           )}
 

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { CompareProvider } from "@/components/compare-store";
+import { CompareBar } from "@/components/compare-bar";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -44,9 +46,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <CompareProvider>
+          <Header />
+          <main className="min-h-screen pb-16">{children}</main>
+          <Footer />
+          <CompareBar />
+        </CompareProvider>
       </body>
     </html>
   );
