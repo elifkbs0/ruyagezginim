@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: "Bugünün en büyük indirimleri ve fırsatları. Rüya gibi fiyatlarla alışveriş yap.",
 };
 
-export const revalidate = 1800;
+export const dynamic = "force-dynamic";
 
 export default async function FirsatlarPage() {
   const deals = await db.platformListing.findMany({
