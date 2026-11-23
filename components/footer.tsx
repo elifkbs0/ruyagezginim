@@ -13,7 +13,7 @@ export function Footer() {
                 <Sparkles size={16} className="text-white" />
               </div>
               <span className="font-bold text-white text-lg">
-                Rüya<span className="text-amber-400">Gezgini</span>
+                Rüya<span className="text-amber-400">Gezginim</span>
               </span>
             </div>
             <p className="text-sm text-purple-300 leading-relaxed">
@@ -100,7 +100,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-purple-900 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-purple-400">
-          <p>© {new Date().getFullYear()} Rüya Gezgini. Tüm hakları saklıdır.</p>
+          <p>© {new Date().getFullYear()} Rüya Gezginim. Tüm hakları saklıdır.</p>
           <p className="text-xs">
             Bu site bilgilendirme amaçlıdır. Fiyatlar değişkenlik gösterebilir.
           </p>

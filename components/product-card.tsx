@@ -39,7 +39,7 @@ export function ProductCard({
   const priceDiff = priceMax > priceMin ? Math.round(((priceMax - priceMin) / priceMin) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-200 group">
       {/* Image */}
       <Link href={`/urun/${slug}`} className="block relative aspect-square bg-gray-50">
         {imageUrl ? (
@@ -47,13 +47,14 @@ export function ProductCard({
             src={imageUrl}
             alt={name}
             fill
-            className="object-contain p-3"
+            className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             unoptimized
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <ShoppingCart size={48} />
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-200">
+            <ShoppingCart size={36} />
+            <span className="text-xs text-gray-300 font-medium">Görsel yok</span>
           </div>
         )}
 

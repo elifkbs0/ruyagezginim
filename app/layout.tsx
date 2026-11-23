@@ -8,11 +8,11 @@ import Script from "next/script";
 
 export const metadata: Metadata = {
   title: {
-    default: "Rüya Gezgini | Rüya Gibi Fiyatlar Bul",
-    template: "%s | Rüya Gezgini",
+    default: "Rüya Gezginim | En Ucuz Fiyatları Karşılaştır",
+    template: "%s | Rüya Gezginim",
   },
   description:
-    "Trendyol, Hepsiburada, Amazon ve daha fazlasından en iyi fiyatları karşılaştır. Rüya gibi fiyatlarla alışveriş yap.",
+    "Trendyol, Hepsiburada, Amazon, N11 ve Çiçeksepeti'nden en ucuz fiyatları tek aramada karşılaştır. Rüya Gezginim ile en iyi fiyatı bul.",
   keywords: [
     "fiyat karşılaştırma",
     "en ucuz",
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
     "alışveriş",
   ],
   openGraph: {
-    title: "Rüya Gezgini | Rüya Gibi Fiyatlar Bul",
-    description: "En iyi fiyatları tek yerden karşılaştır",
+    title: "Rüya Gezginim | En Ucuz Fiyatları Karşılaştır",
+    description: "Trendyol, Hepsiburada, Amazon ve daha fazlasını tek aramada karşılaştır.",
     locale: "tr_TR",
     type: "website",
   },
